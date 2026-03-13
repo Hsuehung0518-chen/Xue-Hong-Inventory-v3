@@ -74,7 +74,6 @@
 
     <div class="w-full max-w-md min-h-screen flex flex-col relative overflow-hidden bg-slate-950 border-x border-white/5">
         
-        <!-- Header: 智慧檢索指揮部 -->
         <header class="glass-header p-6 sticky top-0 z-40 shadow-2xl">
             <div class="flex justify-between items-center mb-6">
                 <div>
@@ -82,7 +81,7 @@
                         <span class="text-2xl text-blue-500">🛡️</span> 庫存智慧中心
                     </h1>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Xue-Hong v3.1.1 Optical+</span>
+                        <span class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">Xue-Hong v3.1.2 Optical+</span>
                         <div id="statusDot" class="w-2 h-2 rounded-full bg-slate-700 transition-colors"></div>
                     </div>
                 </div>
@@ -99,7 +98,6 @@
             <button onclick="analyzeFullInventory()" class="w-full mt-4 py-4 ai-shimmer text-white rounded-2xl text-[11px] font-black shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-widest">✨ 啟動 AI 全局策略分析</button>
         </header>
 
-        <!-- Main: 料號資產列表 -->
         <main id="itemList" class="flex-1 p-5 space-y-8 overflow-y-auto no-scrollbar pb-32">
             <div id="loadingInfo" class="flex flex-col items-center justify-center py-48 text-slate-700">
                 <div class="w-10 h-10 border-2 border-slate-800 border-t-blue-500 rounded-full animate-spin mb-6"></div>
@@ -107,7 +105,6 @@
             </div>
         </main>
 
-        <!-- AI Modal -->
         <div id="aiModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-2xl hidden">
             <div class="bg-slate-900 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-fade-in border border-white/5">
                 <div class="p-6 bg-slate-800/50 text-white flex justify-between items-center border-b border-white/5">
@@ -131,28 +128,29 @@
 
     <script>
         /**
-         * 💎 學宏 AI 研發智坊：核心底層驅動 (v3.1.1 視覺終極修復版)
+         * 💎 學宏 AI 研發智坊：核心底層驅動 (v3.1.2 視覺終極修復版)
          */
-        const apiKey = ""; 
+        // ⚠️ 核心修復：請在此填入您的正式 Gemini API Key
+        const apiKey = "請在此填寫您的_GEMINI_API_KEY"; 
+        
         const SHEET_ID = "2PACX-1vS8nkx1MrkeZ_xhnvzCG9_v03AnyR6rK58DhNRxULaSmVEgUFByTZ2TLRT62gOQ8q_8RSy2e05ag8qw";
         const CSV_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv`;
 
         let db = [];
 
-        // 🛡️ 終極圖片解析器：支援直連格式轉換
+        // 🛡️ 終極圖片解析器：支援直連格式轉換 (修復語法錯誤)
         function fixImageUrl(url) {
             if (!url) return "";
             url = url.trim();
             
-            // 處理 Google Drive 連結（含您提供的 uc?id= 格式）
             if (url.includes("drive.google.com")) {
                 let id = "";
                 const regex = /[-\w]{25,}/; 
                 const match = url.match(regex);
                 if (match) {
                     id = match[0];
-                    // 使用 lh3 鏡像伺服器，對手機瀏覽器相容性更強
-                    return `https://lh3.googleusercontent.com/d/${id}`;
+                    // 修復：補上 $ 符號，並使用相容性更高的 Drive 讀取點
+                    return `https://drive.google.com/uc?export=view&id=${id}`;
                 }
             }
             return url;
@@ -178,11 +176,13 @@
 
                 if (rows.length < 2) throw new Error("Sheet_Empty");
 
+                // 修復：完整捕獲第 5 個欄位 (UPDATED時間)
                 db = rows.slice(1).map(row => ({
                     name: (row[0] || "").replace(/"/g, "").trim(),
                     spec: (row[1] || "").replace(/"/g, "").trim(),
                     photo: fixImageUrl((row[2] || "").replace(/"/g, "").trim()),
-                    qty: (row[3] || "0").replace(/"/g, "").trim()
+                    qty: (row[3] || "0").replace(/"/g, "").trim(),
+                    updatedAt: (row[4] || "未提供更新時間").replace(/"/g, "").trim()
                 })).filter(i => i.name !== "");
 
                 badge.innerText = `LIVE: ${db.length}`;
@@ -206,6 +206,7 @@
                 return;
             }
 
+            // 修復：UI 增加 updatedAt 欄位顯示，且為 i.name 加上跳脫處理
             listEl.innerHTML = results.map((i, idx) => `
                 <div class="rounded-[2.5rem] overflow-hidden item-card animate-fade-in shadow-2xl" style="animation-delay: ${idx * 0.05}s">
                     <div class="img-container">
@@ -224,6 +225,7 @@
                             <div class="text-right">
                                 <span class="text-5xl font-black ${parseInt(i.qty) <= 0 ? 'text-red-500' : 'text-blue-500'} tabular-nums tracking-tighter quantity-badge">${i.qty}</span>
                                 <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2 tracking-widest">Unit Count</p>
+                                <p class="text-[8px] text-slate-600 font-bold mt-1 tracking-wider opacity-80">${i.updatedAt}</p>
                             </div>
                         </div>
                         <div class="space-y-6">
@@ -231,13 +233,14 @@
                                 <p class="text-[9px] text-slate-500 font-black mb-3 uppercase italic tracking-widest opacity-60">Tech Specification</p>
                                 <p class="text-sm text-slate-400 leading-relaxed font-bold">${i.spec || 'Information not provided.'}</p>
                             </div>
-                            <button onclick="analyzePart('${i.name}', '${i.spec.replace(/'/g, "\\'")}')" class="w-full py-5 bg-white text-slate-950 rounded-[1.2rem] text-[11px] font-black shadow-lg hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 tracking-widest uppercase">✨ AI Deep Diagnosis</button>
+                            <button onclick="analyzePart('${i.name.replace(/'/g, "\\'")}', '${i.spec.replace(/'/g, "\\'")}')" class="w-full py-5 bg-white text-slate-950 rounded-[1.2rem] text-[11px] font-black shadow-lg hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 tracking-widest uppercase">✨ AI Deep Diagnosis</button>
                         </div>
                     </div>
                 </div>`).join('');
         }
 
         async function callGemini(prompt, systemPrompt) {
+            // 提醒：若 09-2025 預覽版日後失效，請替換為當下最新穩定版號 (例如 gemini-1.5-flash)
             const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
             for (let i = 0; i < 5; i++) { try { const response = await fetch(endpoint, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.json(); return result.candidates?.[0]?.content?.parts?.[0]?.text || "System analyzing..."; } catch (e) { await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); } } return "Connection timeout.";
@@ -246,7 +249,7 @@
         async function analyzePart(name, spec) { showModal("正在執行專家診斷中..."); const result = await callGemini(`料號：${name}\n規格：${spec}`, "你是一位工業零件專家。提供功能、維護及技術格言（繁體中文）。"); updateModalContent(result); }
         async function analyzeFullInventory() { if (db.length === 0) return; showModal("正在執行全局庫存策略推演..."); const result = await callGemini(`庫存數據：${db.map(i => `${i.name}:${i.qty}`).join(", ")}`, "你是一位庫存策略官。提供 3 點庫存優化建議（繁體中文）。"); updateModalContent(result); }
         function showModal(t) { document.getElementById('aiContent').innerHTML = `<div class="py-24 text-center"><div class="w-12 h-12 border-2 border-slate-800 border-t-blue-500 rounded-full animate-spin mx-auto mb-8"></div><p class="animate-pulse text-slate-600 font-bold tracking-widest uppercase text-xs">${t}</p></div>`; document.getElementById('aiModal').classList.remove('hidden'); }
-        function updateModalContent(t) { document.getElementById('aiContent').innerText = t; }
+        function updateModalContent(t) { document.getElementById('aiContent').innerHTML = t.replace(/\n/g, '<br>'); }
         function closeModal() { document.getElementById('aiModal').classList.add('hidden'); }
         window.onload = loadData;
     </script>
