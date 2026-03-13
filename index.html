@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>零件庫存智慧查詢系統 v3.1 | 學宏 AI 工作坊</title>
+    <title>零件庫存智慧查詢系統 v4.1 | 學宏 AI 研發智坊</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -99,7 +99,7 @@
             <button onclick="analyzeFullInventory()" class="w-full mt-4 py-4 ai-shimmer text-white rounded-2xl text-[11px] font-black shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all uppercase tracking-widest">✨ 啟動 AI 全局策略分析</button>
         </header>
 
-        <!-- Main: 零件資產列表 -->
+        <!-- Main: 料號資產列表 -->
         <main id="itemList" class="flex-1 p-5 space-y-8 overflow-y-auto no-scrollbar pb-32">
             <div id="loadingInfo" class="flex flex-col items-center justify-center py-48 text-slate-700">
                 <div class="w-10 h-10 border-2 border-slate-800 border-t-blue-500 rounded-full animate-spin mb-6"></div>
@@ -131,7 +131,7 @@
 
     <script>
         /**
-         * 💎 學宏 AI 工作坊：核心底層驅動 (v3.1.1 視覺終極修復版)
+         * 💎 學宏 AI 研發智坊：核心底層驅動 (v3.1.1 視覺終極修復版)
          */
         const apiKey = ""; 
         const SHEET_ID = "2PACX-1vS8nkx1MrkeZ_xhnvzCG9_v03AnyR6rK58DhNRxULaSmVEgUFByTZ2TLRT62gOQ8q_8RSy2e05ag8qw";
@@ -243,7 +243,7 @@
             for (let i = 0; i < 5; i++) { try { const response = await fetch(endpoint, { method: 'POST', body: JSON.stringify(payload) }); const result = await response.json(); return result.candidates?.[0]?.content?.parts?.[0]?.text || "System analyzing..."; } catch (e) { await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000)); } } return "Connection timeout.";
         }
 
-        async function analyzePart(name, spec) { showModal("正在執行專家診斷中..."); const result = await callGemini(`零件：${name}\n規格：${spec}`, "你是一位工業零件專家。提供功能、維護及技術格言（繁體中文）。"); updateModalContent(result); }
+        async function analyzePart(name, spec) { showModal("正在執行專家診斷中..."); const result = await callGemini(`料號：${name}\n規格：${spec}`, "你是一位工業零件專家。提供功能、維護及技術格言（繁體中文）。"); updateModalContent(result); }
         async function analyzeFullInventory() { if (db.length === 0) return; showModal("正在執行全局庫存策略推演..."); const result = await callGemini(`庫存數據：${db.map(i => `${i.name}:${i.qty}`).join(", ")}`, "你是一位庫存策略官。提供 3 點庫存優化建議（繁體中文）。"); updateModalContent(result); }
         function showModal(t) { document.getElementById('aiContent').innerHTML = `<div class="py-24 text-center"><div class="w-12 h-12 border-2 border-slate-800 border-t-blue-500 rounded-full animate-spin mx-auto mb-8"></div><p class="animate-pulse text-slate-600 font-bold tracking-widest uppercase text-xs">${t}</p></div>`; document.getElementById('aiModal').classList.remove('hidden'); }
         function updateModalContent(t) { document.getElementById('aiContent').innerText = t; }
