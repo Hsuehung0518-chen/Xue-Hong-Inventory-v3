@@ -138,7 +138,7 @@
 
         let db = [];
 
-        // 🛡️ 終極圖片解析器：支援直連格式轉換 (修復語法錯誤)
+        // 🛡️ 終極圖片解析器：升級使用 Google Drive Thumbnail API 繞過防護限制
         function fixImageUrl(url) {
             if (!url) return "";
             url = url.trim();
@@ -149,8 +149,8 @@
                 const match = url.match(regex);
                 if (match) {
                     id = match[0];
-                    // 修復：補上 $ 符號，並使用相容性更高的 Drive 讀取點
-                    return `https://drive.google.com/uc?export=view&id=${id}`;
+                    // 🌟 核心修復：改用 Thumbnail API，完美支援手機跨域直連，並預載 800px 高清畫質
+                    return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
                 }
             }
             return url;
