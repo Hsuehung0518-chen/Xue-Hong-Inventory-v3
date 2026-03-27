@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>零件庫存上傳中心｜Xue-Hong Inventory</title>
+<title>零件庫存上傳中心｜Xue-Hong Inventory v5</title>
 https://cdn.tailwindcss.com
+
 <style>
 body {
     font-family: 'Noto Sans TC', sans-serif;
@@ -25,26 +26,26 @@ body {
 
     <h1 class="text-xl font-black mb-6 flex items-center gap-2">
         <span class="text-blue-500 text-2xl">📦</span>
-        零件庫存上傳中心
+        零件庫存上傳中心（Firebase v5）
     </h1>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">零件料號</label>
+    <label class="block text-sm text-slate-300 font-bold mb-2">零件料號 *</label>
     <input id="itemName" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入料號">
 
     <label class="block text-sm text-slate-300 font-bold mb-2">規格</label>
     <input id="itemSpec" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入規格">
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">數量</label>
+    <label class="block text-sm text-slate-300 font-bold mb-2">數量 *</label>
     <input id="itemQty" type="number" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入數量">
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">操作類型</label>
+    <label class="block text-sm text-slate-300 font-bold mb-2">操作類型 *</label>
     <select id="itemMode" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white">
         <option value="in">➕ 入庫</option>
         <option value="out">➖ 出庫</option>
         <option value="set">🔄 調整庫存</option>
     </select>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">拍照存證（可選）</label>
+    <label class="block text-sm text-slate-300 font-bold mb-2">拍照存證（選填）</label>
     <input id="itemPhoto" type="file" accept="image/*" capture="environment" class="text-sm mb-6">
 
     <button onclick="uploadData()"
@@ -55,7 +56,133 @@ body {
     <p id="statusMsg" class="text-center text-sm text-slate-400 mt-6"></p>
 </div>
 
+
+
+<!-- ✨ Firebase SDK -->
+https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js</script>
+https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js
+
 <script>
-/********🔐 5 分鐘短效 Token **************************************/
-const EXEC_URL = "https://script.google.com/macros/s/AKfycbxrXhlawdbmn_8olWWazxgBugCfbMXhVBvsj9sSHOEjVRchz3DQrpbSngbJeKwY-1Kj/exec";
-const SECRET_KEY = "XUE
+/***************************************************
+ * 🔥 你的 Firebase Config（已整合）
+ ***************************************************/
+const firebaseConfig = {
+    apiKey: "AIzaSyDoyXGYwJ3HJPxs25HxoyJI2-9qRr9OKFk",
+    authDomain: "xuehong-inventory.firebaseapp.com",
+    projectId: "xuehong-inventory",
+    storageBucket: "xuehong-inventory.firebasestorage.app",
+    messagingSenderId: "599267061741",
+    appId: "1:599267061741:web:4eb73e73e66830a54881e4"
+};
+
+/***************************************************
+ * 初始化 Firebase
+ ***************************************************/
+const app = firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
+
+/***************************************************
+ * 🔐 Apps Script 後端 URL（保持原樣）
+ ***************************************************/
+const EXEC_URL = "https://script.google.com/macros/s/AKfycbyltNurNQ-YjjL5PGh942-EVJudSEO3QZDzoI7yi5CoFvtwXiAlSMNfFFe03xqOQUI/exec";
+
+/***************************************************
+ * 5 分鐘 Token HMAC（與 index 一樣）
+ ***************************************************/
+const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026";
+
+async function genSignedToken(){
+    const ts = Math.floor(Date.now()/1000);
+    const enc = new TextEncoder();
+
+    const key = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(SECRET_KEY),
+        {name:"HMAC", hash:"SHA-256"},
+        false,
+        ["sign"]
+    );
+
+    const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
+    const bytes = new Uint8Array(sigBuf);
+    let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b));
+
+    const sig = btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    return {ts, sig};
+}
+
+/***************************************************
+ * 📸 圖片轉 Base64
+ ***************************************************/
+function toBase64(file){
+    return new Promise(resolve=>{
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+    });
+}
+
+/***************************************************
+ * 🚀 主功能：上傳資料 + 圖片
+ ***************************************************/
+async function uploadData(){
+    let name = itemName.value.trim();
+    let spec = itemSpec.value.trim();
+    let qty  = itemQty.value.trim();
+    let mode = itemMode.value;
+
+    if(!name || !qty){
+        msg("⚠ 請填寫料號與數量");
+        return;
+    }
+
+    msg("⏳ 處理中...");
+
+    let firebaseUrl = "";
+    let file = itemPhoto.files[0];
+
+    /********** 📤 若有選照片 → 上傳 Firebase **********/
+    if(file){
+        const fileName = `${name}_${Date.now()}.jpg`;
+        const storageRef = storage.ref(`inventory-images/${fileName}`);
+
+        await storageRef.put(file);
+        firebaseUrl = await storageRef.getDownloadURL();
+    }
+
+    /********** 🔐 加入 Token **********/
+    const {ts, sig} = await genSignedToken();
+
+    /********** 📬 傳送到 Apps Script，寫入 Google Sheet **********/
+    const payload = {
+        ts, sig,
+        name, spec, qty, mode,
+        firebaseUrl: firebaseUrl   // ⭐ 用 Firebase URL，完全取代 image_id
+    };
+
+    try{
+        const res = await fetch(EXEC_URL,{
+            method:"POST",
+            body:JSON.stringify(payload)
+        });
+
+        msg("✅ 上傳成功！資料已更新");
+        itemName.value="";
+        itemSpec.value="";
+        itemQty.value="";
+        itemPhoto.value="";
+    }catch(e){
+        msg("❌ 上傳失敗，請再試一次");
+    }
+}
+
+/***************************************************
+ * 💬 訊息顯示
+ ***************************************************/
+function msg(t){
+    document.getElementById("statusMsg").innerText = t;
+}
+</script>
+
+</body>
+</html>
