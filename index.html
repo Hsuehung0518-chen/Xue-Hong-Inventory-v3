@@ -3,47 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xue-Hong Inventory Portal v5.1</title>
+    <title>學宏 · 數位行宮 v5.1 RWD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #020617; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        body { background: #020617; color: #f1f5f9; font-family: 'Inter', sans-serif; margin: 0; }
         .master-canvas { 
-            aspect-ratio: 16 / 9; max-width: 100vw; max-height: 100vh; 
-            margin: 0 auto; position: relative; overflow: hidden;
             background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        /* 桌機/平板端：維持大師級 16:9 */
+        @media (min-width: 1024px) {
+            .master-canvas {
+                aspect-ratio: 16 / 9; max-width: 90vw; max-height: 90vh;
+                margin: 2rem auto; border-radius: 3rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            }
+        }
+        /* 手機端：全螢幕垂直流動 */
+        @media (max-width: 1023px) {
+            .master-canvas { min-height: 100vh; padding: 2rem 1rem; }
         }
         .portal-btn {
             background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .portal-btn:hover {
-            transform: translateY(-10px) scale(1.05);
+            transform: translateY(-5px) scale(1.02);
             background: rgba(59, 130, 246, 0.2); border-color: #3b82f6;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="master-canvas rounded-[3rem] flex flex-col items-center justify-center shadow-2xl">
-        <h1 class="text-4xl font-black tracking-widest text-white mb-2">學宏 · 數位行宮</h1>
-        <p class="text-slate-500 text-sm mb-12">CHIEF AI ORCHESTRATOR / INVENTORY v5.1</p>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="master-canvas w-full">
+        <h1 class="text-3xl lg:text-5xl font-black tracking-widest text-white mb-2 text-center">學宏 · 數位行宮</h1>
+        <p class="text-slate-500 text-[10px] lg:text-sm mb-8 lg:mb-16">CHIEF AI ORCHESTRATOR / v5.1 FLUID</p>
 
-        <div class="grid grid-cols-4 gap-8 px-12 w-full max-w-6xl">
-            <a href="collection.html" class="portal-btn p-10 rounded-3xl text-center group">
-                <div class="text-5xl mb-4 group-hover:scale-110 transition">💎</div>
-                <div class="font-bold text-xl">我的收藏</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 px-4 lg:px-12 w-full max-w-6xl">
+            <a href="collection.html" class="portal-btn p-6 lg:p-10 rounded-3xl text-center group">
+                <div class="text-4xl lg:text-6xl mb-3 group-hover:scale-110 transition">💎</div>
+                <div class="font-bold text-sm lg:text-xl">我的收藏</div>
             </a>
-            <a href="fridge.html" class="portal-btn p-10 rounded-3xl text-center group">
-                <div class="text-5xl mb-4 group-hover:scale-110 transition">❄️</div>
-                <div class="font-bold text-xl">智慧冰箱</div>
+            <a href="fridge.html" class="portal-btn p-6 lg:p-10 rounded-3xl text-center group">
+                <div class="text-4xl lg:text-6xl mb-3 group-hover:scale-110 transition">❄️</div>
+                <div class="font-bold text-sm lg:text-xl">智慧冰箱</div>
             </a>
-            <a href="books.html" class="portal-btn p-10 rounded-3xl text-center group">
-                <div class="text-5xl mb-4 group-hover:scale-110 transition">📚</div>
-                <div class="font-bold text-xl">私人書藏</div>
+            <a href="books.html" class="portal-btn p-6 lg:p-10 rounded-3xl text-center group">
+                <div class="text-4xl lg:text-6xl mb-3 group-hover:scale-110 transition">📚</div>
+                <div class="font-bold text-sm lg:text-xl">私人書藏</div>
             </a>
-            <a href="wardrobe.html" class="portal-btn p-10 rounded-3xl text-center group">
-                <div class="text-5xl mb-4 group-hover:scale-110 transition">👔</div>
-                <div class="font-bold text-xl">精品衣櫥</div>
+            <a href="wardrobe.html" class="portal-btn p-6 lg:p-10 rounded-3xl text-center group">
+                <div class="text-4xl lg:text-6xl mb-3 group-hover:scale-110 transition">👔</div>
+                <div class="font-bold text-sm lg:text-xl">精品衣櫥</div>
             </a>
         </div>
     </div>
