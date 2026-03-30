@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏的精品衣櫥 - Master v5.1</title>
+    <title>學宏的精品衣櫥 - Master v5.1 RWD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #0f172a; color: #f1f5f9; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .master-canvas { aspect-ratio: 16 / 9; max-width: 100vw; max-height: 100vh; margin: 0 auto; position: relative; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 2rem; display: flex; flex-direction: column; }
+        body { background: #0f172a; color: #f1f5f9; font-family: sans-serif; margin: 0; overflow-x: hidden; }
+        .master-canvas { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); display: flex; flex-direction: column; transition: all 0.3s ease; }
+        @media (min-width: 1024px) { .master-canvas { aspect-ratio: 16 / 9; max-width: 90vw; max-height: 90vh; margin: 2rem auto; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); } }
+        @media (max-width: 1023px) { .master-canvas { min-height: 100vh; padding: 1rem; } }
         .glass-card { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.08); transition: 0.3s; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; flex-grow: 1; overflow-y: auto; padding-bottom: 1rem; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; flex-grow: 1; overflow-y: auto; padding-bottom: 1rem; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="master-canvas shadow-2xl rounded-3xl">
-        <header class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+<body class="flex lg:items-center lg:justify-center min-h-screen">
+    <div class="master-canvas">
+        <header class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-white flex items-center gap-2"><span class="text-indigo-400">👔</span> 精品衣櫥</h1>
-                <p class="text-xs text-slate-500 mt-1">Status: <span id="status-live" class="text-indigo-400">LIVE: 0</span> | 風格收納模式</p>
+                <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2"><span class="text-indigo-400">👔</span> 精品衣櫥</h1>
+                <p class="text-[10px] text-slate-500 mt-1">Status: <span id="status-live" class="text-indigo-400">LIVE: 0</span> | 風格收納模式</p>
             </div>
             <a href="index.html" class="glass-card px-4 py-2 rounded-full text-xs text-slate-400 hover:text-white transition">← 傳送門</a>
         </header>
@@ -28,7 +30,7 @@
         const currentCat = "WARDROBE";
         async function loadData() {
             const container = document.getElementById('data-container');
-            container.innerHTML = '<p class="text-center col-span-full text-slate-500">衣飾盤點中...</p>';
+            container.innerHTML = '<p class="text-center col-span-full text-slate-500 text-sm">穿搭盤點中...</p>';
             try {
                 const resp = await fetch(`${API_URL}?path=csv&cat=${currentCat}`);
                 const csv = await resp.text();
@@ -39,16 +41,16 @@
                     const [name, spec, url, qty, date] = line.split(',');
                     const div = document.createElement('div');
                     div.className = "glass-card p-4 rounded-xl flex flex-col";
-                    div.innerHTML = `<img src="${url}" class="w-full h-32 object-cover rounded-lg mb-3" onerror="this.src='https://placehold.co/400x300?text=No+Photo'">
-                        <h3 class="font-bold text-base mb-1 truncate">${name}</h3>
-                        <p class="text-[11px] text-slate-400 truncate">${spec || '日常穿搭'}</p>
-                        <div class="flex justify-between mt-auto items-center pt-3 border-t border-white/5">
-                            <span class="text-indigo-400 font-mono text-lg">x${qty}</span>
-                            <span class="text-[9px] text-slate-600">${date ? date.split(' ')[0] : ''}</span>
+                    div.innerHTML = `<img src="${url}" class="w-full h-28 lg:h-32 object-cover rounded-lg mb-3" onerror="this.src='https://placehold.co/400x300?text=No+Photo'">
+                        <h3 class="font-bold text-sm mb-1 truncate">${name}</h3>
+                        <p class="text-[10px] text-slate-400 truncate">${spec || '日常穿搭'}</p>
+                        <div class="flex justify-between mt-auto items-center pt-2 border-t border-white/5">
+                            <span class="text-indigo-400 font-mono text-base">x${qty}</span>
+                            <span class="text-[8px] text-slate-600">${date ? date.split(' ')[0] : ''}</span>
                         </div>`;
                     container.appendChild(div);
                 });
-            } catch (err) { container.innerHTML = `<p class="text-red-400 text-center col-span-full">載入失敗</p>`; }
+            } catch (err) { container.innerHTML = `<p class="text-red-400 text-center col-span-full text-sm">連線失敗</p>`; }
         }
         loadData();
     </script>
