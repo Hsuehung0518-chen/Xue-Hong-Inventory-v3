@@ -1,157 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 入庫工位 v5.2.4</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <style>
-        body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
-        .paifang-canvas { 
-            background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        /* 新增：字帖卡片樣式 */
+        .study-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            animation: cardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @media (min-width: 1024px) {
-            .paifang-canvas { aspect-ratio: 16 / 9; max-width: 90vw; max-height: 85vh; margin: 2rem auto; border-radius: 3rem; padding: 2rem; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
-        }
-        @media (max-width: 1023px) { .paifang-canvas { min-height: 100vh; padding: 1.5rem 1rem; } }
-
-        .glass-station {
-            background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem;
-        }
-        .input-focus:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); outline: none; }
+        @keyframes cardPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="paifang-canvas w-full">
-        <header class="w-full max-w-2xl flex justify-between items-center mb-6 px-4">
-            <h1 class="text-xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 入庫工位</h1>
-            <a href="index.html" class="text-[10px] bg-slate-800 px-4 py-2 rounded-full hover:bg-blue-900 transition">← 傳送門</a>
-        </header>
+        <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.5em]">
+            確認入庫 · 博毅恆行
+        </button>
 
-        <div class="glass-station w-full max-w-2xl p-6 lg:p-10 shadow-2xl space-y-6">
-            <div class="relative group">
-                <label class="block text-[10px] uppercase tracking-widest text-blue-400 mb-2">Item Image / 影像採集</label>
-                <div class="flex items-center justify-center w-full">
-                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500">
-                            <span class="text-3xl mb-2">📸</span>
-                            <p class="text-xs">點擊開啟相機或選擇照片</p>
-                        </div>
-                        <input type="file" id="fileInput" accept="image/*" capture="camera" class="hidden" onchange="previewImage(this)">
-                    </label>
+        <div id="egg-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+            <div class="study-card w-full max-w-sm p-8 rounded-[2.5rem] text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+                <p class="text-[10px] text-blue-500 tracking-[0.3em] mb-4 uppercase">Bo-Yi Study Card</p>
+                
+                <h2 id="egg-en" class="text-4xl font-black text-white mb-2 italic">Item Name</h2>
+                <p id="egg-zh" class="text-sm text-slate-400 mb-6">中文名稱</p>
+                
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 mb-8">
+                    <p id="egg-sentence" class="text-xs text-slate-300 leading-loose">The example sentence will appear here.</p>
                 </div>
-                <div id="preview-box" class="hidden mt-4 text-center">
-                    <img id="imgPreview" src="#" class="mx-auto h-32 rounded-lg border border-blue-500/50 shadow-lg">
-                </div>
+
+                <button onclick="closeEgg()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs transition">持續博學篤行</button>
             </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Category / 歸屬類別</label>
-                    <select id="category" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm input-focus">
-                        <option value="COLLECTION">💎 私人收藏</option>
-                        <option value="FRIDGE">❄️ 智慧冰箱</option>
-                        <option value="BOOKS">📚 私人書藏</option>
-                        <option value="WARDROBE">👔 精品衣櫥</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Name / 物品名稱</label>
-                    <input type="text" id="itemName" placeholder="例如: 義美鮮奶" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm input-focus">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Spec / 規格(冰箱填日期)</label>
-                    <input type="text" id="itemSpec" placeholder="YYYY-MM-DD" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm input-focus">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase tracking-widest text-slate-500 mb-2">Qty / 數量</label>
-                    <input type="number" id="itemQty" value="1" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm input-focus">
-                </div>
-            </div>
-
-            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.5em]">
-                確認入庫 · 博毅恆行
-            </button>
-            <p id="status" class="text-center text-[10px] text-slate-600 uppercase tracking-tighter"></p>
         </div>
-        
-        <footer class="mt-8 text-[9px] text-slate-800 tracking-[0.3em] uppercase">
-            Data Orchestration Station / HSUEH-HUNG @ BO-YI FANG
-        </footer>
     </div>
 
     <script>
-        // --- 設定區 ---
-        const firebaseConfig = { /* 請填入你的 Firebase 配置 */ };
-        firebase.initializeApp(firebaseConfig);
-        const storage = firebase.storage();
+        // ... Firebase 與 API 設定維持不變 ...
 
-        const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec";
-        const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026";
+        // 簡易辭典模擬 (未來可接入翻譯 API)
+        const studyDict = {
+            "牛奶": { en: "Milk", sentence: "I drink a glass of fresh milk every morning to start my day." },
+            "雞蛋": { en: "Eggs", sentence: "Remember to check the expiry date on the egg carton." },
+            "書": { en: "Book", sentence: "A room without books is like a body without a soul." },
+            "西裝": { en: "Suit", sentence: "He wore a sharp suit for the important business meeting." },
+            "咖啡": { en: "Coffee", sentence: "Nothing beats the aroma of freshly brewed coffee." }
+        };
 
-        function previewImage(input) {
-            const box = document.getElementById('preview-box');
-            const img = document.getElementById('imgPreview');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => { img.src = e.target.result; box.classList.remove('hidden'); }
-                reader.readAsDataURL(input.files[0]);
-            }
+        function showEgg(itemName) {
+            const modal = document.getElementById('egg-modal');
+            const enTitle = document.getElementById('egg-en');
+            const zhTitle = document.getElementById('egg-zh');
+            const sentence = document.getElementById('egg-sentence');
+
+            // 尋找對應單字，若無則顯示通用學習卡
+            const data = studyDict[itemName] || { 
+                en: "New Entry", 
+                sentence: "Continuous learning is the key to mastering your personal world." 
+            };
+
+            enTitle.innerText = data.en;
+            zhTitle.innerText = `「 ${itemName} 」`;
+            sentence.innerText = data.sentence;
+            modal.classList.remove('hidden');
         }
 
-        async function genSignedToken() {
-            const ts = Math.floor(Date.now() / 1000);
-            const enc = new TextEncoder();
-            const key = await crypto.subtle.importKey("raw", enc.encode(SECRET_KEY), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
-            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
-            const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-            return { ts, sig };
+        function closeEgg() {
+            location.reload(); // 關閉後重整頁面，準備下一次入庫
         }
 
         async function startUpload() {
-            const file = document.getElementById('fileInput').files[0];
-            const name = document.getElementById('itemName').value;
-            const category = document.getElementById('category').value;
-            const status = document.getElementById('status');
-            const btn = document.getElementById('uploadBtn');
-
-            if (!file || !name) return alert("請拍張照並輸入名稱");
-
-            try {
-                btn.disabled = true;
-                status.innerText = ">> Firebase 採集影像中...";
-                
-                const fileRef = storage.ref(`inventory/${Date.now()}_${file.name}`);
-                const snapshot = await fileRef.put(file);
-                const firebaseUrl = await snapshot.ref.getDownloadURL(); [cite: 33, 120]
-
-                status.innerText = ">> 博毅坊大腦處理中...";
-                const { ts, sig } = await genSignedToken(); [cite: 102-109, 121]
-
-                const payload = {
-                    ts, sig, name, 
-                    spec: document.getElementById('itemSpec').value,
-                    qty: document.getElementById('itemQty').value,
-                    firebaseUrl, category, mode: "add"
-                };
-
-                const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-                const result = await response.json();
-                if (result.status === "success") {
-                    alert(`【${name}】已成功歸檔至博毅坊！`);
-                    location.reload();
-                } else { throw new Error(result.message); }
-            } catch (err) {
-                alert("入庫失敗: " + err.message);
+            // ... 前段 Firebase 上傳邏輯維持不變 ...
+            
+            // 在 fetch 成功的回傳處理中修改：
+            const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+            const result = await response.json();
+            
+            if (result.status === "success") {
                 btn.disabled = false;
+                status.innerText = ">> 入庫成功，開啟學習時刻...";
+                showEgg(name); // 觸發學習彩蛋，取代原本的 alert
+            } else {
+                throw new Error(result.message);
             }
         }
     </script>
