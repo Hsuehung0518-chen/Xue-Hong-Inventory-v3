@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xue-Hong Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #020617; color: #94a3b8; font-family: monospace; }
+        .glass-panel { background: rgba(15, 23, 42, 0.8); border: 1px solid #1e293b; }
+        pre { background: #000; padding: 10px; border-radius: 5px; color: #4ade80; font-size: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body class="p-4 lg:p-10 flex items-center justify-center min-h-screen">
+    <div class="glass-panel w-full max-w-4xl rounded-2xl p-6 shadow-2xl">
+        <header class="border-b border-slate-800 pb-4 mb-6 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-white">SYSTEM COMMAND CENTER <span class="text-blue-500">v5.1</span></h1>
+            <a href="index.html" class="text-[10px] bg-slate-800 px-3 py-1 rounded hover:text-white">EXIT</a>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section class="space-y-4">
+                <h2 class="text-sm font-bold text-slate-400"># API_CONNECTIVITY_TEST</h2>
+                <div class="flex gap-2">
+                    <select id="testCat" class="bg-slate-900 border border-slate-700 text-xs p-2 rounded">
+                        <option value="COLLECTION">COLLECTION</option>
+                        <option value="FRIDGE">FRIDGE</option>
+                        <option value="BOOKS">BOOKS</option>
+                        <option value="WARDROBE">WARDROBE</option>
+                    </select>
+                    <button onclick="testFetch()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded hover:bg-blue-500">RUN GET</button>
+                </div>
+                <div id="output" class="text-[10px] h-40 overflow-y-auto border border-slate-800 p-2 rounded bg-black">Waiting for command...</div>
+            </section>
+
+            <section class="space-y-4">
+                <h2 class="text-sm font-bold text-slate-400"># SECURITY_HMAC_AUDIT</h2>
+                <div class="p-4 bg-slate-900/50 rounded-lg border border-blue-900/30">
+                    <p class="text-xs mb-1">SECRET_KEY: <span class="text-yellow-500">****_2026</span></p>
+                    <p class="text-xs mb-1">EXPIRY: <span class="text-blue-400">300s (5min)</span></p>
+                    <div id="token-status" class="mt-4 text-[10px] text-slate-500">TOKEN GENERATOR READY</div>
+                </div>
+                <button onclick="checkToken()" class="w-full border border-slate-700 text-xs py-2 rounded hover:bg-slate-800">GENERATE TEST TOKEN</button>
+            </section>
+        </div>
+
+        <footer class="mt-10 pt-4 border-t border-slate-800 text-center">
+            <p class="text-[9px] text-slate-600">CHIEF AI ORCHESTRATOR / MASTER COMMAND PANEL / 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec";
+        const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026"; // [cite: 227]
+
+        async function testFetch() {
+            const cat = document.getElementById('testCat').value;
+            const output = document.getElementById('output');
+            output.innerText = `>> Fetching ${cat} raw data...`;
+            try {
+                const resp = await fetch(`${API_URL}?path=csv&cat=${cat}`);
+                const text = await resp.text();
+                output.innerHTML = `<pre>${text.slice(0, 500)}...</pre>`;
+            } catch (err) {
+                output.innerText = `!! ERROR: ${err}`;
+            }
+        }
+
+        async function checkToken() {
+            const ts = Math.floor(Date.now() / 1000);
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey("raw", enc.encode(SECRET_KEY), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
+            const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+            
+            document.getElementById('token-status').innerHTML = `
+                <p class="text-green-400 font-bold">NEW TOKEN GENERATED:</p>
+                <p class="mt-1">TS: ${ts}</p>
+                <p class="break-all">SIG: ${sig}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
