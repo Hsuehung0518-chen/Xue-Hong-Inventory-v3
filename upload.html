@@ -1,187 +1,279 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>零件庫存上傳中心｜Xue-Hong Inventory v5</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xue-Hong Inventory v5 | Firebase Edition</title>
 https://cdn.tailwindcss.com
 
-<style>
-body {
-    font-family: 'Noto Sans TC', sans-serif;
-    background:#020617;
-    color:#f1f5f9;
-}
-.glass {
-    background: rgba(15,23,42,0.65);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.08);
-}
-</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body {
+            font-family: "Noto Sans TC", sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+        }
+
+        .glass-header {
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .item-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.4s;
+        }
+
+        .item-card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        .ai-shimmer {
+            background: linear-gradient(90deg, #1d4ed8, #7c3aed, #1d4ed8);
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .img-container {
+            width: 100%;
+            height: 260px;
+            overflow: hidden;
+            background: #0f172a;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .img-loaded img {
+            opacity: 1;
+        }
+
+        .img-placeholder {
+            position: absolute;
+            font-size: 3rem;
+            opacity: .15;
+        }
+    </style>
 </head>
 
-<body class="min-h-screen flex justify-center p-5">
+<body class="min-h-screen flex justify-center">
 
-<div class="w-full max-w-md glass p-6 mt-6 rounded-3xl shadow-xl">
+    <div class="w-full max-w-md min-h-screen bg-slate-950 flex flex-col border-x border-white/5">
 
-    <h1 class="text-xl font-black mb-6 flex items-center gap-2">
-        <span class="text-blue-500 text-2xl">📦</span>
-        零件庫存上傳中心（Firebase v5）
-    </h1>
+        <header class="glass-header p-6 sticky top-0 z-50 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="font-black text-xl tracking-tight flex items-center gap-2">
+                        <span class="text-2xl text-blue-500">📦</span> 庫存查詢中心
+                    </h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-slate-500 font-bold tracking-wider">XH Inventory v5</span>
+                        <div id="statusDot" class="w-2 h-2 rounded-full bg-slate-700"></div>
+                    </div>
+                </div>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">零件料號 *</label>
-    <input id="itemName" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入料號">
+                <!-- 上傳頁面按鈕 -->
+                <a href="upload.html"
+                    class="text-[11px] font-bold px-3 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800">
+                    📤 上傳
+                </a>
+            </div>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">規格</label>
-    <input id="itemSpec" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入規格">
+            <div class="relative">
+                <input id="filterInput" oninput="runFilter()" placeholder="搜尋 NAME / SPEC..."
+                    class="w-full bg-slate-900 border border-slate-700 p-4 pl-12 rounded-2xl text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500">
+                <span class="absolute left-4 top-4 text-xl opacity-30">🔍</span>
+            </div>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">數量 *</label>
-    <input id="itemQty" type="number" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white" placeholder="輸入數量">
+            <button onclick="analyzeFullInventory()"
+                class="w-full mt-4 py-4 ai-shimmer font-black text-[11px] tracking-widest rounded-2xl">
+                ✨ AI 全局庫存分析
+            </button>
+        </header>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">操作類型 *</label>
-    <select id="itemMode" class="w-full p-3 rounded-xl bg-slate-900 border border-slate-700 mb-4 text-white">
-        <option value="in">➕ 入庫</option>
-        <option value="out">➖ 出庫</option>
-        <option value="set">🔄 調整庫存</option>
-    </select>
+        <main id="itemList" class="flex-1 p-5 space-y-8 overflow-y-auto pb-20"></main>
 
-    <label class="block text-sm text-slate-300 font-bold mb-2">拍照存證（選填）</label>
-    <input id="itemPhoto" type="file" accept="image/*" capture="environment" class="text-sm mb-6">
+        <footer
+            class="mt-auto p-4 text-center text-[10px] text-slate-600 tracking-widest border-t border-white/5">
+            © Xue-Hong Inventory
+        </footer>
 
-    <button onclick="uploadData()"
-    class="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-black py-4 rounded-2xl active:scale-95">
-        🚀 立即上傳
-    </button>
+    </div>
 
-    <p id="statusMsg" class="text-center text-sm text-slate-400 mt-6"></p>
-</div>
-
-
-
-<!-- ✨ Firebase SDK -->
-https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js</script>
-https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js
+    <!-- AI Modal -->
+    <div id="aiModal"
+        class="fixed inset-0 bg-black/90 backdrop-blur-xl hidden z-50 flex justify-center items-center p-6">
+        <div class="bg-slate-900 border border-white/10 rounded-3xl max-w-md w-full">
+            <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                <h2 class="font-black uppercase text-[12px]">AI Insight</h2>
+                <button onclick="closeModal()" class="text-xl">✕</button>
+            </div>
+            <div id="aiContent" class="p-6 text-slate-300 text-sm leading-relaxed"></div>
+        </div>
+    </div>
 
 <script>
 /***************************************************
- * 🔥 你的 Firebase Config（已整合）
+ * 🔐 Apps Script 後端 URL
  ***************************************************/
-const firebaseConfig = {
-    apiKey: "AIzaSyDoyXGYwJ3HJPxs25HxoyJI2-9qRr9OKFk",
-    authDomain: "xuehong-inventory.firebaseapp.com",
-    projectId: "xuehong-inventory",
-    storageBucket: "xuehong-inventory.firebasestorage.app",
-    messagingSenderId: "599267061741",
-    appId: "1:599267061741:web:4eb73e73e66830a54881e4"
-};
+const EXEC_URL =
+  "https://script.google.com/macros/s/AKfycbyltNurNQ-YjjL5PGh942-EVJudSEO3QZDzoI7yi5CoFvtwXiAlSMNfFFe03xqOQUI/exec";
 
 /***************************************************
- * 初始化 Firebase
- ***************************************************/
-const app = firebase.initializeApp(firebaseConfig);
-const storage = firebase.storage();
-
-/***************************************************
- * 🔐 Apps Script 後端 URL（保持原樣）
- ***************************************************/
-const EXEC_URL = "https://script.google.com/macros/s/AKfycbyltNurNQ-YjjL5PGh942-EVJudSEO3QZDzoI7yi5CoFvtwXiAlSMNfFFe03xqOQUI/exec";
-
-/***************************************************
- * 5 分鐘 Token HMAC（與 index 一樣）
+ * 🔐 5 分鐘短效 Token
  ***************************************************/
 const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026";
 
-async function genSignedToken(){
-    const ts = Math.floor(Date.now()/1000);
+async function genSignedToken() {
+    const ts = Math.floor(Date.now() / 1000);
     const enc = new TextEncoder();
 
     const key = await crypto.subtle.importKey(
         "raw",
         enc.encode(SECRET_KEY),
-        {name:"HMAC", hash:"SHA-256"},
+        { name: "HMAC", hash: "SHA-256" },
         false,
         ["sign"]
     );
 
     const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
     const bytes = new Uint8Array(sigBuf);
-    let bin=""; bytes.forEach(b=>bin+=String.fromCharCode(b));
 
-    const sig = btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-    return {ts, sig};
+    let bin = "";
+    bytes.forEach((b) => (bin += String.fromCharCode(b)));
+
+    const sig = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+    return { ts, sig };
 }
 
 /***************************************************
- * 📸 圖片轉 Base64
+ * 📥 載入 CSV
  ***************************************************/
-function toBase64(file){
-    return new Promise(resolve=>{
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-    });
+let db = [];
+
+async function loadData() {
+    const { ts, sig } = await genSignedToken();
+    const CSV_URL = `${EXEC_URL}?path=csv&ts=${ts}&sig=${sig}`;
+
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+
+    const rows = text.split(/\r?\n/).filter((r) => r.trim() !== "");
+    const parsed = rows.slice(1).map((r) => r.split(","));
+
+    db = parsed.map((r) => ({
+        name: r[0],
+        spec: r[1],
+        photo: r[2],   // Firebase URL
+        qty: r[3],
+        updated: r[4],
+    }));
+
+    runFilter();
 }
 
-/***************************************************
- * 🚀 主功能：上傳資料 + 圖片
- ***************************************************/
-async function uploadData(){
-    let name = itemName.value.trim();
-    let spec = itemSpec.value.trim();
-    let qty  = itemQty.value.trim();
-    let mode = itemMode.value;
+async function runFilter() {
+    const term = document.getElementById("filterInput").value.toLowerCase();
+    const list = document.getElementById("itemList");
 
-    if(!name || !qty){
-        msg("⚠ 請填寫料號與數量");
+    const results = db.filter(
+        (i) =>
+            i.name.toLowerCase().includes(term) ||
+            i.spec.toLowerCase().includes(term)
+    );
+
+    if (results.length === 0) {
+        list.innerHTML = `<p class="text-center py-20 text-slate-600">No Results</p>`;
         return;
     }
 
-    msg("⏳ 處理中...");
+    list.innerHTML = results
+        .map(
+            (item, idx) => `
+        <div class="item-card rounded-3xl overflow-hidden animate-fade-in"
+             style="animation-delay:${idx * 0.05}s">
+             
+            <div class="img-container">
+                ${
+                    item.photo
+                        ? `<img src="${item.photo}" onload="this.parentElement.classList🖼️</span>`
+                }
+            </div>
 
-    let firebaseUrl = "";
-    let file = itemPhoto.files[0];
+            <div class="p-6">
+                <h3 class="text-xl font-black mb-1">${item.name}</h3>
+                <p class="text-slate-500 text-xs uppercase tracking-widest">SPEC</p>
 
-    /********** 📤 若有選照片 → 上傳 Firebase **********/
-    if(file){
-        const fileName = `${name}_${Date.now()}.jpg`;
-        const storageRef = storage.ref(`inventory-images/${fileName}`);
+                <div class="mt-4 bg-slate-900/50 rounded-2xl p-4">
+                    <p class="text-slate-400 text-sm">${item.spec}</p>
+                </div>
 
-        await storageRef.put(file);
-        firebaseUrl = await storageRef.getDownloadURL();
-    }
-
-    /********** 🔐 加入 Token **********/
-    const {ts, sig} = await genSignedToken();
-
-    /********** 📬 傳送到 Apps Script，寫入 Google Sheet **********/
-    const payload = {
-        ts, sig,
-        name, spec, qty, mode,
-        firebaseUrl: firebaseUrl   // ⭐ 用 Firebase URL，完全取代 image_id
-    };
-
-    try{
-        const res = await fetch(EXEC_URL,{
-            method:"POST",
-            body:JSON.stringify(payload)
-        });
-
-        msg("✅ 上傳成功！資料已更新");
-        itemName.value="";
-        itemSpec.value="";
-        itemQty.value="";
-        itemPhoto.value="";
-    }catch(e){
-        msg("❌ 上傳失敗，請再試一次");
-    }
+                <div class="mt-6 flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-slate-600 uppercase">Quantity</p>
+                        <p class="text-4xl font-black text-blue-500">${item.qty}</p>
+                    </div>
+                    <p class="text-xs text-slate-500">${item.updated}</p>
+                </div>
+            </div>
+        </div>`
+        )
+        .join("");
 }
 
 /***************************************************
- * 💬 訊息顯示
+ * 🤖 AI（保留原功能）
  ***************************************************/
-function msg(t){
-    document.getElementById("statusMsg").innerText = t;
+function showModal(t) {
+    document.getElementById("aiContent").innerHTML = t;
+    document.getElementById("aiModal").classList.remove("hidden");
 }
+
+function closeModal() {
+    document.getElementById("aiModal").classList.add("hidden");
+}
+
+function analyzeFullInventory() {
+    showModal("AI 功能示意（可接 Gemini API）");
+}
+
+window.onload = loadData;
 </script>
 
 </body>
