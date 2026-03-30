@@ -1,280 +1,131 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xue-Hong Inventory v5 | Firebase Edition</title>
-https://cdn.tailwindcss.com
-
+    <title>Xue-Hong Inventory Uploader v5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
-        body {
-            font-family: "Noto Sans TC", sans-serif;
-            background-color: #020617;
-            color: #f8fafc;
-        }
-
-        .glass-header {
-            background: rgba(2, 6, 23, 0.85);
-            backdrop-filter: blur(25px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .item-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            transition: all 0.4s;
-        }
-
-        .item-card:hover {
-            border-color: rgba(59, 130, 246, 0.4);
-        }
-
-        .ai-shimmer {
-            background: linear-gradient(90deg, #1d4ed8, #7c3aed, #1d4ed8);
-            background-size: 200% auto;
-            animation: shimmer 3s linear infinite;
-        }
-
-        @keyframes shimmer {
-            to {
-                background-position: 200% center;
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .img-container {
-            width: 100%;
-            height: 260px;
-            overflow: hidden;
-            background: #0f172a;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .img-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out;
-        }
-
-        .img-loaded img {
-            opacity: 1;
-        }
-
-        .img-placeholder {
-            position: absolute;
-            font-size: 3rem;
-            opacity: .15;
-        }
+        body { background: #0f172a; color: #f8fafc; }
+        .glass-input { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); color: white; }
     </style>
 </head>
+<body class="p-6">
+    <div class="max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-blue-400 mb-6 text-center">庫存入庫中心 v5</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">物品照片 (直接上傳 Firebase)</label>
+                <input type="file" id="fileInput" accept="image/*" capture="camera" class="w-full glass-input p-2 rounded-lg text-sm">
+            </div>
 
-<body class="min-h-screen flex justify-center">
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">歸屬類別</label>
+                <select id="category" class="w-full glass-input p-3 rounded-lg outline-none focus:border-blue-500">
+                    <option value="COLLECTION">我的收藏</option>
+                    <option value="FRIDGE">冰箱食材 (請於規格填日期)</option>
+                    <option value="BOOKS">我的書櫃</option>
+                    <option value="WARDROBE">我的衣櫃</option>
+                </select>
+            </div>
 
-    <div class="w-full max-w-md min-h-screen bg-slate-950 flex flex-col border-x border-white/5">
-
-        <header class="glass-header p-6 sticky top-0 z-50 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
+            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <h1 class="font-black text-xl tracking-tight flex items-center gap-2">
-                        <span class="text-2xl text-blue-500">📦</span> 庫存查詢中心
-                    </h1>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs text-slate-500 font-bold tracking-wider">XH Inventory v5</span>
-                        <div id="statusDot" class="w-2 h-2 rounded-full bg-slate-700"></div>
-                    </div>
+                    <label class="block text-sm text-slate-400 mb-1">物品名稱</label>
+                    <input type="text" id="itemName" placeholder="例如: 鮮奶" class="w-full glass-input p-3 rounded-lg">
                 </div>
-
-                <!-- 上傳頁面按鈕 -->
-                <a href="upload.html"
-                    class="text-[11px] font-bold px-3 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800">
-                    📤 上傳
-                </a>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-1">數量</label>
+                    <input type="number" id="itemQty" value="1" class="w-full glass-input p-3 rounded-lg">
+                </div>
             </div>
 
-            <div class="relative">
-                <input id="filterInput" oninput="runFilter()" placeholder="搜尋 NAME / SPEC..."
-                    class="w-full bg-slate-900 border border-slate-700 p-4 pl-12 rounded-2xl text-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500">
-                <span class="absolute left-4 top-4 text-xl opacity-30">🔍</span>
+            <div>
+                <label class="block text-sm text-slate-400 mb-1">規格/說明 (冰箱請填: YYYY-MM-DD)</label>
+                <input type="text" id="itemSpec" placeholder="規格或效期" class="w-full glass-input p-3 rounded-lg">
             </div>
 
-            <button onclick="analyzeFullInventory()"
-                class="w-full mt-4 py-4 ai-shimmer font-black text-[11px] tracking-widest rounded-2xl">
-                ✨ AI 全局庫存分析
+            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition">
+                確認上傳入庫
             </button>
-        </header>
-
-        <main id="itemList" class="flex-1 p-5 space-y-8 overflow-y-auto pb-20"></main>
-
-        <footer
-            class="mt-auto p-4 text-center text-[10px] text-slate-600 tracking-widest border-t border-white/5">
-            © Xue-Hong Inventory
-        </footer>
-
-    </div>
-
-    <!-- AI Modal -->
-    <div id="aiModal"
-        class="fixed inset-0 bg-black/90 backdrop-blur-xl hidden z-50 flex justify-center items-center p-6">
-        <div class="bg-slate-900 border border-white/10 rounded-3xl max-w-md w-full">
-            <div class="p-4 border-b border-white/10 flex justify-between items-center">
-                <h2 class="font-black uppercase text-[12px]">AI Insight</h2>
-                <button onclick="closeModal()" class="text-xl">✕</button>
-            </div>
-            <div id="aiContent" class="p-6 text-slate-300 text-sm leading-relaxed"></div>
+            <p id="status" class="text-center text-sm text-slate-500"></p>
         </div>
     </div>
 
-<script>
-/***************************************************
- * 🔐 Apps Script 後端 URL
- ***************************************************/
-const EXEC_URL =
-  "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmqSUkF-wIPMzzuGAUL9bTdry9ow/exec";
+    <script>
+        // --- 設定區 ---
+        const firebaseConfig = { /* 請填入你的 Firebase 配置  */ };
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
 
-/***************************************************
- * 🔐 5 分鐘短效 Token
- ***************************************************/
-const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec"; //
+        const SECRET_KEY = "XUEHONG_SUPER_SECRET_KEY_2026"; // [cite: 104]
 
-async function genSignedToken() {
-    const ts = Math.floor(Date.now() / 1000);
-    const enc = new TextEncoder();
+        // --- HMAC Token 生成器 ---
+        async function genSignedToken() {
+            const ts = Math.floor(Date.now() / 1000);
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey("raw", enc.encode(SECRET_KEY), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
+            const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+            return { ts, sig };
+        }
 
-    const key = await crypto.subtle.importKey(
-        "raw",
-        enc.encode(SECRET_KEY),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-    );
+        // --- 上傳主邏輯 ---
+        async function startUpload() {
+            const file = document.getElementById('fileInput').files[0];
+            const name = document.getElementById('itemName').value;
+            const category = document.getElementById('category').value;
+            const status = document.getElementById('status');
+            const btn = document.getElementById('uploadBtn');
 
-    const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
-    const bytes = new Uint8Array(sigBuf);
+            if (!file || !name) return alert("請至少提供照片與名稱");
 
-    let bin = "";
-    bytes.forEach((b) => (bin += String.fromCharCode(b)));
+            try {
+                btn.disabled = true;
+                status.innerText = "Step 1: 上傳照片至 Firebase...";
+                
+                // 1. Firebase 上傳 [cite: 31]
+                const fileRef = storage.ref(`inventory/${Date.now()}_${file.name}`);
+                const snapshot = await fileRef.put(file);
+                const firebaseUrl = await snapshot.ref.getDownloadURL(); // [cite: 32]
 
-    const sig = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+                status.innerText = "Step 2: 正在寫入 Google Sheet...";
+                
+                // 2. 生成安全 Token [cite: 102-109]
+                const { ts, sig } = await genSignedToken();
 
-    return { ts, sig };
-}
+                // 3. POST 到 Apps Script [cite: 33-41, 89]
+                const payload = {
+                    ts, sig,
+                    name, 
+                    spec: document.getElementById('itemSpec').value,
+                    qty: document.getElementById('itemQty').value,
+                    firebaseUrl,
+                    category,
+                    mode: "add"
+                };
 
-/***************************************************
- * 📥 載入 CSV
- ***************************************************/
-let db = [];
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
 
-async function loadData() {
-    const { ts, sig } = await genSignedToken();
-    const CSV_URL = `${EXEC_URL}?path=csv&ts=${ts}&sig=${sig}`;
-
-    const res = await fetch(CSV_URL);
-    const text = await res.text();
-
-    const rows = text.split(/\r?\n/).filter((r) => r.trim() !== "");
-    const parsed = rows.slice(1).map((r) => r.split(","));
-
-    db = parsed.map((r) => ({
-        name: r[0],
-        spec: r[1],
-        photo: r[2],   // Firebase URL
-        qty: r[3],
-        updated: r[4],
-    }));
-
-    runFilter();
-}
-
-async function runFilter() {
-    const term = document.getElementById("filterInput").value.toLowerCase();
-    const list = document.getElementById("itemList");
-
-    const results = db.filter(
-        (i) =>
-            i.name.toLowerCase().includes(term) ||
-            i.spec.toLowerCase().includes(term)
-    );
-
-    if (results.length === 0) {
-        list.innerHTML = `<p class="text-center py-20 text-slate-600">No Results</p>`;
-        return;
-    }
-
-    list.innerHTML = results
-        .map(
-            (item, idx) => `
-        <div class="item-card rounded-3xl overflow-hidden animate-fade-in"
-             style="animation-delay:${idx * 0.05}s">
-             
-            <div class="img-container">
-                ${
-                    item.photo
-                        ? `<img src="${item.photo}" onload="this.parentElement.classList🖼️</span>`
+                const result = await response.json();
+                if (result.status === "success") {
+                    alert(`入庫成功！已分類至: ${category}`);
+                    location.reload();
+                } else {
+                    throw new Error(result.message);
                 }
-            </div>
-
-            <div class="p-6">
-                <h3 class="text-xl font-black mb-1">${item.name}</h3>
-                <p class="text-slate-500 text-xs uppercase tracking-widest">SPEC</p>
-
-                <div class="mt-4 bg-slate-900/50 rounded-2xl p-4">
-                    <p class="text-slate-400 text-sm">${item.spec}</p>
-                </div>
-
-                <div class="mt-6 flex justify-between items-end">
-                    <div>
-                        <p class="text-xs text-slate-600 uppercase">Quantity</p>
-                        <p class="text-4xl font-black text-blue-500">${item.qty}</p>
-                    </div>
-                    <p class="text-xs text-slate-500">${item.updated}</p>
-                </div>
-            </div>
-        </div>`
-        )
-        .join("");
-}
-
-/***************************************************
- * 🤖 AI（保留原功能）
- ***************************************************/
-function showModal(t) {
-    document.getElementById("aiContent").innerHTML = t;
-    document.getElementById("aiModal").classList.remove("hidden");
-}
-
-function closeModal() {
-    document.getElementById("aiModal").classList.add("hidden");
-}
-
-function analyzeFullInventory() {
-    showModal("AI 功能示意（可接 Gemini API）");
-}
-
-window.onload = loadData;
-</script>
-
+            } catch (err) {
+                alert("上傳失敗: " + err.message);
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>
