@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 萬象定點 v5.3.3</title>
+    <title>學宏 @ 博毅坊 | 圓融修復 v5.3.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,38 +11,38 @@
     <style>
         body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
         .paifang-canvas { background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 100%); }
-        .glass-station { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 2.5rem; }
-        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
-        .input-dark:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); outline: none; }
-        .study-card { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(30px); border: 1px solid rgba(59, 130, 246, 0.5); animation: cardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes cardPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .glass-station { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; }
+        .input-dark { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .input-dark:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); outline: none; }
+        .study-card { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(40px); border: 1px solid rgba(59, 130, 246, 0.5); animation: cardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes cardPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="paifang-canvas w-full min-h-screen flex flex-col items-center justify-center p-4">
-        <header class="w-full max-w-2xl flex justify-between items-center mb-6">
-            <h1 class="text-xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 萬象定點</h1>
+        <header class="w-full max-w-2xl flex justify-between items-center mb-8">
+            <h1 class="text-2xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 入庫工位</h1>
             <a href="index.html" class="text-[10px] bg-slate-800 px-6 py-2 rounded-full border border-slate-700 hover:bg-blue-900 transition tracking-widest">← 傳送門</a>
         </header>
 
-        <div class="glass-station w-full max-w-2xl p-6 lg:p-10 shadow-2xl space-y-6">
+        <div class="glass-station w-full max-w-2xl p-8 lg:p-12 shadow-2xl space-y-8">
             <div class="relative">
                 <label class="block text-[10px] uppercase tracking-[0.4em] text-blue-400 mb-3 text-center">Capture or Gallery / 影像採集</label>
-                <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-slate-700 border-dashed rounded-3xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition overflow-hidden">
+                <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-700 border-dashed rounded-3xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition overflow-hidden">
                     <div id="upload-hint" class="flex flex-col items-center justify-center text-slate-500">
-                        <span class="text-3xl mb-2">📸 / 🖼️</span>
-                        <p class="text-xs">拍照或從相簿選擇</p>
+                        <span class="text-4xl mb-3">📸</span>
+                        <p class="text-xs italic">點擊拍照或上傳相片</p>
                     </div>
                     <img id="imgPreview" class="hidden h-full w-full object-cover">
                     <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="previewImage(this)">
                 </label>
             </div>
 
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="space-y-5">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div>
-                        <label class="block text-[10px] text-blue-400 mb-1 uppercase tracking-widest">Category / 分類</label>
-                        <select id="category" onchange="updateUIByCat()" class="input-dark w-full p-3 rounded-xl text-sm text-white">
+                        <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Category / 分類</label>
+                        <select id="category" onchange="updateUIByCat()" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                             <option value="COLLECTION">💎 私人收藏</option>
                             <option value="FRIDGE">❄️ 智慧冰箱</option>
                             <option value="BOOKS">📚 私人書藏</option>
@@ -50,48 +50,49 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-blue-400 mb-1 uppercase tracking-widest">Name / 物品名稱</label>
-                        <input type="text" id="itemName" placeholder="請輸入名稱" class="input-dark w-full p-3 rounded-xl text-sm text-white">
+                        <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Name / 物品名稱</label>
+                        <input type="text" id="itemName" placeholder="如：高麗菜" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div class="lg:col-span-1">
-                        <label id="specLabel" class="block text-[10px] text-blue-400 mb-1 uppercase tracking-widest">Specification / 規格</label>
-                        <input type="text" id="itemSpec" placeholder="描述或效期" class="input-dark w-full p-3 rounded-xl text-sm text-white">
+                        <label id="specLabel" class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Spec / 規格或效期</label>
+                        <input type="text" id="itemSpec" placeholder="描述或日期" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                     <div class="lg:col-span-1">
-                        <label class="block text-[10px] text-blue-400 mb-1 uppercase tracking-widest">Storage / 儲位</label>
-                        <input type="text" id="itemLocation" placeholder="擺放位置" class="input-dark w-full p-3 rounded-xl text-sm text-white">
+                        <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Location / 儲位</label>
+                        <input type="text" id="itemLocation" placeholder="擺放位置" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                     <div class="lg:col-span-1">
-                        <label class="block text-[10px] text-blue-400 mb-1 uppercase tracking-widest">Qty / 數量</label>
-                        <input type="number" id="itemQty" value="1" min="1" class="input-dark w-full p-3 rounded-xl text-sm text-white">
+                        <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Qty / 數量</label>
+                        <input type="number" id="itemQty" value="1" min="1" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                 </div>
             </div>
 
-            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.8em] text-sm">
+            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.8em] text-sm">
                 確認入庫 · 博毅恆行
             </button>
-            <p id="status" class="text-center text-[10px] text-slate-600 uppercase tracking-widest"></p>
+            <p id="status" class="text-center text-[10px] text-slate-500 uppercase tracking-widest min-h-[1.5em]"></p>
         </div>
 
         <div id="egg-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95">
             <div class="study-card w-full max-w-sm p-8 rounded-[3rem] text-center relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
                 <p class="text-[10px] text-blue-500 tracking-[0.3em] mb-4 uppercase">Bo-Yi Study Card</p>
-                <h2 id="egg-en" class="text-4xl font-black text-white mb-2 italic">Item</h2>
-                <p id="egg-zh" class="text-sm text-slate-400 mb-6">中文名稱</p>
-                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 mb-8">
+                <h2 id="egg-en" class="text-4xl font-black text-white mb-2 italic">Success</h2>
+                <p id="egg-zh" class="text-sm text-slate-400 mb-6">入庫成功</p>
+                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-8">
                     <p id="egg-sentence" class="text-xs text-slate-300 leading-loose italic"></p>
                 </div>
-                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] tracking-[0.4em] transition">持續博學篤行</button>
+                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-[10px] tracking-[0.4em] transition">持續博學篤行</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- 核心配置 (與 Firebase 截圖精準對接) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDoyXGYWJ3HJPxs25HxoyJI2-9qRr9OKFk",
             authDomain: "xuehong-inventory.firebaseapp.com",
@@ -103,6 +104,8 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const storage = firebase.storage();
         const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec";
+        
+        // 🔐 密鑰混淆
         const _v = () => ["XUEHONG", "SUPER", "SECRET", "KEY", "2026"].join("_");
 
         function updateUIByCat() {
@@ -110,10 +113,10 @@
             const label = document.getElementById('specLabel');
             const input = document.getElementById('itemSpec');
             if (cat === 'FRIDGE') {
-                label.innerText = "Expiry / 效期";
+                label.innerText = "Expiry / 效期日期";
                 input.type = "date";
             } else {
-                label.innerText = "Spec / 規格";
+                label.innerText = "Spec / 規格描述";
                 input.type = "text";
             }
         }
@@ -129,12 +132,14 @@
         }
 
         async function genToken() {
-            const ts = Math.floor(Date.now() / 1000);
-            const enc = new TextEncoder();
-            const key = await crypto.subtle.importKey("raw", enc.encode(_v()), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
-            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
-            const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-            return { ts, sig };
+            try {
+                const ts = Math.floor(Date.now() / 1000);
+                const enc = new TextEncoder();
+                const key = await crypto.subtle.importKey("raw", enc.encode(_v()), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+                const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
+                const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+                return { ts, sig };
+            } catch (e) { throw new Error("加密握手失敗: " + e.message); }
         }
 
         async function startUpload() {
@@ -150,16 +155,17 @@
 
             try {
                 btn.disabled = true;
-                status.innerText = ">> 影像上傳中...";
+                status.innerText = ">> 影像上傳中 (Firebase)...";
+                
                 const fileRef = storage.ref(`inventory/${Date.now()}_${file.name}`);
                 const snapshot = await fileRef.put(file);
                 const firebaseUrl = await snapshot.ref.getDownloadURL();
 
-                status.innerText = ">> 資料歸檔中...";
+                status.innerText = ">> 歸檔驗證中 (Google Sheet)...";
                 const { ts, sig } = await genToken();
 
-                // 智慧合併：將規格與儲位合併存入 SPEC 欄位，確保不破壞試算表結構
-                const combinedSpec = `${spec || '無描述'} | 儲位：${loc || '未定'}`;
+                // 儲位與規格合併處理
+                const combinedSpec = `${spec || '無'} | 儲位：${loc || '未註明'}`;
 
                 const payload = {
                     ts, sig, name, 
@@ -174,14 +180,17 @@
                 const result = await response.json();
 
                 if (result.status === "success") {
+                    status.innerText = ">> 入庫圓滿完成！";
                     document.getElementById('egg-modal').classList.remove('hidden');
-                    document.getElementById('egg-zh').innerText = `「 ${name} 」`;
-                    document.getElementById('egg-en').innerText = "Stored Success";
-                    document.getElementById('egg-sentence').innerText = `已妥善安置於：${loc || '未定位置'}`;
-                } else { throw new Error(result.message); }
+                    document.getElementById('egg-sentence').innerText = `物品「${name}」已妥善存放在「${loc || '未指定儲位'}」。`;
+                } else { 
+                    throw new Error(result.message || "後台伺服器回傳錯誤"); 
+                }
             } catch (err) {
-                alert("入庫失敗: " + err.message);
+                console.error(err);
+                alert("🛑 入庫失敗報錯: " + err.message);
                 btn.disabled = false;
+                status.innerText = "狀態：暫停中";
             }
         }
     </script>
