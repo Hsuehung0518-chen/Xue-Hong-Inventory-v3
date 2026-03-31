@@ -1,9 +1,9 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 入庫工位 v5.3.0</title>
+    <title>學宏 @ 博毅坊 | 入庫工位 v5.3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -11,73 +11,103 @@
     <style>
         body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
         .paifang-canvas { background: radial-gradient(circle at top right, #1e1b4b 0%, #020617 100%); }
-        .glass-station { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 2rem; }
+        .glass-station { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 2.5rem; }
+        .study-card { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(30px); border: 1px solid rgba(59, 130, 246, 0.5); animation: cardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes cardPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="paifang-canvas w-full min-h-screen flex flex-col items-center justify-center p-4">
-        <header class="w-full max-w-2xl flex justify-between items-center mb-6">
-            <h1 class="text-xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 入庫工位</h1>
-            <a href="index.html" class="text-[10px] bg-slate-800 px-4 py-2 rounded-full hover:bg-blue-900 transition">← 傳送門</a>
+        <header class="w-full max-w-2xl flex justify-between items-center mb-8">
+            <h1 class="text-2xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 入庫工位</h1>
+            <a href="index.html" class="text-[10px] bg-slate-800 px-6 py-2 rounded-full border border-slate-700 hover:bg-blue-900 transition tracking-widest">← 傳送門</a>
         </header>
 
-        <div class="glass-station w-full max-w-2xl p-6 lg:p-10 shadow-2xl space-y-6">
-            <div class="relative group">
-                <label class="block text-[10px] uppercase tracking-widest text-blue-400 mb-2">Item Image / 影像採集</label>
-                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition">
-                    <div class="flex flex-col items-center justify-center text-slate-500">
-                        <span class="text-3xl mb-2">📸</span>
-                        <p class="text-xs">點擊拍照或選擇照片</p>
+        <div class="glass-station w-full max-w-2xl p-8 lg:p-12 shadow-2xl space-y-8">
+            <div class="relative">
+                <label class="block text-[10px] uppercase tracking-[0.4em] text-blue-400 mb-3 text-center">Item Image / 影像採集</label>
+                <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-700 border-dashed rounded-3xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition">
+                    <div id="upload-hint" class="flex flex-col items-center justify-center text-slate-500">
+                        <span class="text-4xl mb-3">📸</span>
+                        <p class="text-xs">點擊開啟相機拍照</p>
                     </div>
+                    <img id="imgPreview" class="hidden h-full w-full object-cover rounded-3xl">
                     <input type="file" id="fileInput" accept="image/*" capture="camera" class="hidden" onchange="previewImage(this)">
                 </label>
-                <div id="preview-box" class="hidden mt-4 text-center">
-                    <img id="imgPreview" src="#" class="mx-auto h-32 rounded-lg border border-blue-500/50 shadow-lg">
-                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <select id="category" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white">
-                    <option value="COLLECTION">💎 私人收藏</option>
-                    <option value="FRIDGE">❄️ 智慧冰箱</option>
-                    <option value="BOOKS">📚 私人書藏</option>
-                    <option value="WARDROBE">👔 精品衣櫥</option>
-                </select>
-                <input type="text" id="itemName" placeholder="物品名稱" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white">
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-2 tracking-widest">分類</label>
+                    <select id="category" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-2xl text-sm text-white appearance-none">
+                        <option value="COLLECTION">💎 私人收藏</option>
+                        <option value="FRIDGE">❄️ 智慧冰箱</option>
+                        <option value="BOOKS">📚 私人書藏</option>
+                        <option value="WARDROBE">👔 精品衣櫥</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-2 tracking-widest">名稱</label>
+                    <input type="text" id="itemName" placeholder="請輸入物品名稱" class="w-full bg-slate-950 border border-slate-800 p-4 rounded-2xl text-sm text-white">
+                </div>
             </div>
 
-            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.5em]">
+            <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.8em] text-sm">
                 確認入庫 · 博毅恆行
             </button>
-            <p id="status" class="text-center text-[10px] text-slate-600 uppercase"></p>
+            <p id="status" class="text-center text-[10px] text-slate-600 uppercase tracking-widest"></p>
+        </div>
+
+        <div id="egg-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90">
+            <div class="study-card w-full max-w-sm p-8 rounded-[3rem] text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+                <p class="text-[10px] text-blue-500 tracking-[0.3em] mb-4 uppercase">Bo-Yi Study Card</p>
+                <h2 id="egg-en" class="text-4xl font-black text-white mb-2 italic">Item</h2>
+                <p id="egg-zh" class="text-sm text-slate-400 mb-6">中文名稱</p>
+                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 mb-8">
+                    <p id="egg-sentence" class="text-xs text-slate-300 leading-loose italic"></p>
+                </div>
+                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[10px] tracking-widest transition">持續博學篤行</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- 資安加固配置區 ---
+        // --- 修正後的配置：排除所有註解符號 ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBw... (填入你截圖中的完整 apiKey)",
+            apiKey: "AIzaSyDoyXGYWJ3HJPxs25HxoyJI2-9qRr9OKFk",
             authDomain: "xuehong-inventory.firebaseapp.com",
             projectId: "xuehong-inventory",
             storageBucket: "xuehong-inventory.appspot.com",
-            messagingSenderId: "367205244583",
-            appId: "1:367205244583:web:78c5997970d475688a2d17"
+            messagingSenderId: "599267061741",
+            appId: "1:599267061741:web:4eb73e73e66830a54881e4"
         };
-        firebase.initializeApp(firebaseConfig);
-        const storage = firebase.storage();
 
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+        const storage = firebase.storage();
         const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec";
         
-        // 🔐 密鑰混淆化 (Obfuscation): 透過分段合成，防止 GitHub 爬蟲直接抓取純文字金鑰
-        const _k = ["XUEHONG", "SUPER", "SECRET", "KEY", "2026"];
-        const _v = () => _k.join("_"); 
+        // 🔐 密鑰混淆化
+        const _v = () => ["XUEHONG", "SUPER", "SECRET", "KEY", "2026"].join("_");
+
+        const studyDict = {
+            "高麗菜": { en: "Cabbage", sentence: "Fresh cabbage is a great source of Vitamin C and dietary fiber." },
+            "牛奶": { en: "Milk", sentence: "Always keep the milk refrigerated to maintain its freshness." },
+            "咖啡": { en: "Coffee", sentence: "The aroma of freshly brewed coffee can brighten your entire morning." }
+        };
 
         function previewImage(input) {
-            const box = document.getElementById('preview-box');
+            const hint = document.getElementById('upload-hint');
             const img = document.getElementById('imgPreview');
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = e => { img.src = e.target.result; box.classList.remove('hidden'); }
+                reader.onload = e => { 
+                    img.src = e.target.result; 
+                    img.classList.remove('hidden'); 
+                    hint.classList.add('hidden');
+                }
                 reader.readAsDataURL(input.files[0]);
             }
         }
@@ -91,17 +121,27 @@
             return { ts, sig };
         }
 
+        function showEgg(name) {
+            const modal = document.getElementById('egg-modal');
+            const data = studyDict[name] || { en: "Knowledge", sentence: "Continuously learning new words expands your horizons in Bo-Yi Workshop." };
+            document.getElementById('egg-en').innerText = data.en;
+            document.getElementById('egg-zh').innerText = `「 ${name} 」`;
+            document.getElementById('egg-sentence').innerText = data.sentence;
+            modal.classList.remove('hidden');
+        }
+
         async function startUpload() {
-            const file = document.getElementById('fileInput').files[0];
-            const name = document.getElementById('itemName').value;
+            const fileInput = document.getElementById('fileInput');
+            const nameInput = document.getElementById('itemName');
             const btn = document.getElementById('uploadBtn');
             const status = document.getElementById('status');
 
-            if (!file || !name) return alert("請拍張照並輸入名稱");
+            if (!fileInput.files[0] || !nameInput.value) return alert("請拍張照並輸入物品名稱");
 
             try {
                 btn.disabled = true;
-                status.innerText = ">> 加密影像採集中...";
+                status.innerText = ">> 博毅影像採集加密中...";
+                const file = fileInput.files[0];
                 const fileRef = storage.ref(`inventory/${Date.now()}_${file.name}`);
                 const snapshot = await fileRef.put(file);
                 const firebaseUrl = await snapshot.ref.getDownloadURL();
@@ -110,22 +150,24 @@
                 const { ts, sig } = await genToken();
 
                 const payload = {
-                    ts, sig, name, 
-                    spec: "", qty: 1, 
-                    firebaseUrl, 
-                    category: document.getElementById('category').value, 
+                    ts, sig, name: nameInput.value,
+                    spec: new Date().toLocaleDateString(),
+                    qty: 1, firebaseUrl,
+                    category: document.getElementById('category').value,
                     mode: "add"
                 };
 
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const result = await response.json();
+
                 if (result.status === "success") {
-                    alert("【" + name + "】已成功歸檔至博毅坊！");
-                    location.reload();
+                    status.innerText = ">> 入庫完成，開啟學習時刻";
+                    showEgg(nameInput.value);
                 } else { throw new Error(result.message); }
             } catch (err) {
                 alert("入庫失敗: " + err.message);
                 btn.disabled = false;
+                status.innerText = "";
             }
         }
     </script>
