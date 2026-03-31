@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 數位門戶 v5.2.3</title>
+    <title>學宏 @ 博毅坊 | 數位門戶 v5.2.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; overflow-x: hidden; }
+        body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; overflow: hidden; }
         
         /* 牌坊沉浸式畫布 */
         .paifang-canvas { 
@@ -16,7 +16,6 @@
             position: relative;
         }
 
-        /* 桌機端：16:9 比例 */
         @media (min-width: 1024px) {
             .paifang-canvas {
                 aspect-ratio: 16 / 9; max-width: 90vw; max-height: 85vh;
@@ -26,12 +25,11 @@
             }
         }
 
-        /* 手機端：全螢幕流動佈局 */
         @media (max-width: 1023px) {
-            .paifang-canvas { min-height: 100vh; padding: 2rem 1rem; }
+            .paifang-canvas { min-height: 100vh; padding: 2rem 1rem; overflow-y: auto; }
         }
 
-        /* 牌坊裝飾元素 */
+        /* 牌坊主匾額與玻璃質感 */
         .glass-plaque {
             background: rgba(30, 41, 59, 0.3); backdrop-filter: blur(25px);
             border-top: 4px solid #3b82f6; border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -47,16 +45,22 @@
             border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2);
         }
 
-        /* 典故區動畫 */
-        #quote-flow { animation: fadeInScale 1.5s ease-out; }
-        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        /* 虛擬連動：懸浮齒輪動畫 */
+        @keyframes rotateGear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .hover-gear:hover { animation: rotateGear 2s linear infinite; }
+        
+        @keyframes bounce-short {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-pop { animation: bounce-short 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
 
-    <div class="paifang-canvas w-full overflow-hidden">
+    <div class="paifang-canvas w-full">
         
-        <div id="quote-flow" class="w-full max-w-3xl mb-8 lg:mb-12 px-6 text-center">
+        <div id="quote-flow" class="w-full max-w-3xl mb-8 lg:mb-12 px-6 text-center opacity-0 transition-opacity duration-1000">
             <div class="inline-block px-6 py-2 rounded-full border border-blue-900/50 bg-blue-950/20 shadow-inner">
                 <p id="quote-text" class="text-[11px] lg:text-sm text-blue-200 tracking-wide font-light"></p>
                 <p id="quote-author" class="text-[9px] text-blue-500 mt-1 uppercase font-bold font-sans"></p>
@@ -67,7 +71,7 @@
             <h1 class="text-3xl lg:text-6xl font-black tracking-[0.3em] text-white">學宏 @ 博毅坊</h1>
             <div class="flex items-center justify-center gap-4 mt-4">
                 <span class="h-[1px] w-8 lg:w-16 bg-slate-700"></span>
-                <p class="text-slate-500 text-[10px] lg:text-sm font-sans tracking-[0.8em] uppercase">The Resolute Workshop</p>
+                <p class="text-slate-500 text-[10px] lg:text-sm font-sans tracking-[0.8em] uppercase italic">The Resolute Workshop</p>
                 <span class="h-[1px] w-8 lg:w-16 bg-slate-700"></span>
             </div>
         </div>
@@ -91,12 +95,20 @@
             </a>
         </div>
 
-        <footer class="absolute bottom-6 w-full text-center px-4">
-            <div class="flex justify-center gap-8 items-center text-[9px] text-slate-800 tracking-[0.3em] uppercase">
-                <a href="admin.html" class="hover:text-slate-500 transition">Command_Center</a>
-                <span class="h-3 w-[1px] bg-slate-900"></span>
-                <a href="upload.html" class="hover:text-slate-500 transition">Data_Input</a>
+        <div id="virtual-linkage" class="fixed bottom-8 right-8 z-[100] flex flex-col-reverse items-center gap-4">
+            <button onclick="toggleNav()" class="w-14 h-14 rounded-full bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 text-white shadow-2xl flex items-center justify-center hover:bg-blue-600/40 transition-all active:scale-90 hover-gear">
+                <span class="text-2xl">⚙️</span>
+            </button>
+            
+            <div id="nav-items" class="hidden flex flex-col gap-4 mb-4 animate-pop">
+                <a href="admin.html" title="指揮中心" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">🖥️</a>
+                <a href="upload.html" title="入庫工位" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">📸</a>
+                <button onclick="location.reload()" title="重整坊間" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">🔄</button>
             </div>
+        </div>
+
+        <footer class="mt-auto mb-6 text-[9px] text-slate-800 tracking-[0.4em] uppercase">
+            © 2026 HSUEH-HUNG @ BO-YI FANG | V5.2.9 MASTER
         </footer>
     </div>
 
@@ -105,22 +117,26 @@
         const quotes = [
             { text: "「博學而篤志，切問而近思，仁在其中矣。」", author: "—《論語 · 子張》" },
             { text: "「君子求諸己，小人求諸人。」", author: "—《論語 · 衛靈公》" },
-            { text: "「三人行，必有我師焉。」", author: "—《論語 · 述而》" },
             { text: "「博觀而約取，厚積而薄發。」", author: "— 蘇軾" },
             { text: "“The important thing is not to stop questioning.”", author: "— Albert Einstein" },
             { text: "“Stay hungry, stay foolish.”", author: "— Steve Jobs" },
-            { text: "“Knowledge makes humble, ignorance makes proud.”", author: "— Socrates" },
             { text: "“True humility is not thinking less of yourself; it is thinking of yourself less.”", author: "— C.S. Lewis" },
-            { text: "“Everything should be made as simple as possible, but not simpler.”", author: "— Albert Einstein" }
+            { text: "“Knowledge makes humble, ignorance makes proud.”", author: "— Socrates" }
         ];
 
         function refreshQuote() {
+            const flow = document.getElementById('quote-flow');
             const idx = Math.floor(Math.random() * quotes.length);
             document.getElementById('quote-text').innerText = quotes[idx].text;
             document.getElementById('quote-author').innerText = quotes[idx].author;
+            flow.style.opacity = 1;
         }
 
-        // 頁面加載時隨機刷新典故
+        function toggleNav() {
+            const nav = document.getElementById('nav-items');
+            nav.classList.toggle('hidden');
+        }
+
         window.onload = refreshQuote;
     </script>
 </body>
