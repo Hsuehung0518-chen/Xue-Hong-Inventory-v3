@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 圓融修復 v5.3.4</title>
+    <title>學宏 @ 博毅坊 | 疾速工位 v5.3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -20,26 +20,29 @@
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="paifang-canvas w-full min-h-screen flex flex-col items-center justify-center p-4">
-        <header class="w-full max-w-2xl flex justify-between items-center mb-8">
-            <h1 class="text-2xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 入庫工位</h1>
-            <a href="index.html" class="text-[10px] bg-slate-800 px-6 py-2 rounded-full border border-slate-700 hover:bg-blue-900 transition tracking-widest">← 傳送門</a>
+        <header class="w-full max-w-2xl flex justify-between items-center mb-6">
+            <h1 class="text-2xl lg:text-3xl font-black tracking-widest text-white">博毅坊 · 疾速工位</h1>
+            <a href="index.html" class="text-[10px] bg-slate-800 px-6 py-2 rounded-full border border-slate-700 hover:bg-blue-900 transition">← 傳送門</a>
         </header>
 
-        <div class="glass-station w-full max-w-2xl p-8 lg:p-12 shadow-2xl space-y-8">
+        <div class="glass-station w-full max-w-2xl p-6 lg:p-10 shadow-2xl space-y-6">
             <div class="relative">
-                <label class="block text-[10px] uppercase tracking-[0.4em] text-blue-400 mb-3 text-center">Capture or Gallery / 影像採集</label>
-                <label class="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-700 border-dashed rounded-3xl cursor-pointer bg-slate-900/50 hover:bg-slate-800 transition overflow-hidden">
-                    <div id="upload-hint" class="flex flex-col items-center justify-center text-slate-500">
+                <label class="block text-[10px] uppercase tracking-[0.4em] text-blue-400 mb-3 text-center">影像採集 / Image Selection</label>
+                <div id="drop-zone" class="relative flex flex-col items-center justify-center w-full h-56 border-2 border-slate-700 border-dashed rounded-3xl bg-slate-900/50 overflow-hidden">
+                    <div id="upload-hint" class="flex flex-col items-center justify-center text-slate-500" onclick="document.getElementById('fileInput').click()">
                         <span class="text-4xl mb-3">📸</span>
-                        <p class="text-xs italic">點擊拍照或上傳相片</p>
+                        <p class="text-xs">點擊拍照或選擇影像</p>
                     </div>
-                    <img id="imgPreview" class="hidden h-full w-full object-cover">
-                    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="previewImage(this)">
-                </label>
+                    <div id="preview-container" class="hidden w-full h-full relative">
+                        <img id="imgPreview" class="w-full h-full object-contain bg-black/40">
+                        <button onclick="resetImage()" class="absolute top-4 right-4 w-10 h-10 bg-red-600/80 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-500 transition">✕</button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="processImage(this)">
+                </div>
             </div>
 
-            <div class="space-y-5">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Category / 分類</label>
                         <select id="category" onchange="updateUIByCat()" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
@@ -51,14 +54,14 @@
                     </div>
                     <div>
                         <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Name / 物品名稱</label>
-                        <input type="text" id="itemName" placeholder="如：高麗菜" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
+                        <input type="text" id="itemName" placeholder="請輸入名稱" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div class="lg:col-span-1">
-                        <label id="specLabel" class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Spec / 規格或效期</label>
-                        <input type="text" id="itemSpec" placeholder="描述或日期" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
+                        <label id="specLabel" class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Spec / 規格效期</label>
+                        <input type="text" id="itemSpec" class="input-dark w-full p-4 rounded-2xl text-sm text-white">
                     </div>
                     <div class="lg:col-span-1">
                         <label class="block text-[10px] text-blue-400 mb-2 uppercase tracking-widest">Location / 儲位</label>
@@ -74,25 +77,19 @@
             <button onclick="startUpload()" id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-xl transition-all active:scale-95 tracking-[0.8em] text-sm">
                 確認入庫 · 博毅恆行
             </button>
-            <p id="status" class="text-center text-[10px] text-slate-500 uppercase tracking-widest min-h-[1.5em]"></p>
+            <p id="status" class="text-center text-[10px] text-blue-500 uppercase tracking-widest min-h-[1.5em]"></p>
         </div>
+    </div>
 
-        <div id="egg-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95">
-            <div class="study-card w-full max-w-sm p-8 rounded-[3rem] text-center relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-                <p class="text-[10px] text-blue-500 tracking-[0.3em] mb-4 uppercase">Bo-Yi Study Card</p>
-                <h2 id="egg-en" class="text-4xl font-black text-white mb-2 italic">Success</h2>
-                <p id="egg-zh" class="text-sm text-slate-400 mb-6">入庫成功</p>
-                <div class="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 mb-8">
-                    <p id="egg-sentence" class="text-xs text-slate-300 leading-loose italic"></p>
-                </div>
-                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-[10px] tracking-[0.4em] transition">持續博學篤行</button>
-            </div>
+    <div id="egg-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95">
+        <div class="study-card w-full max-w-sm p-8 rounded-[3rem] text-center relative">
+            <h2 class="text-3xl font-black text-white mb-4">歸檔完成</h2>
+            <p id="egg-sentence" class="text-sm text-slate-300 leading-loose mb-8"></p>
+            <button onclick="location.reload()" class="w-full py-4 bg-blue-600 text-white rounded-xl text-xs tracking-widest transition">好的</button>
         </div>
     </div>
 
     <script>
-        // --- 核心配置 (與 Firebase 截圖精準對接) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDoyXGYWJ3HJPxs25HxoyJI2-9qRr9OKFk",
             authDomain: "xuehong-inventory.firebaseapp.com",
@@ -101,96 +98,125 @@
             messagingSenderId: "599267061741",
             appId: "1:599267061741:web:4eb73e73e66830a54881e4"
         };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const storage = firebase.storage();
         const API_URL = "https://script.google.com/macros/s/AKfycbzx_NyCOnB_6ylCti5A_vLJWSJVs2ZsSCoQnwdix3CmQSUkF-wiPMzzuGAUL9bTdry9ow/exec";
         
-        // 🔐 密鑰混淆
-        const _v = () => ["XUEHONG", "SUPER", "SECRET", "KEY", "2026"].join("_");
+        let compressedBlob = null;
 
         function updateUIByCat() {
             const cat = document.getElementById('category').value;
-            const label = document.getElementById('specLabel');
             const input = document.getElementById('itemSpec');
-            if (cat === 'FRIDGE') {
-                label.innerText = "Expiry / 效期日期";
-                input.type = "date";
-            } else {
-                label.innerText = "Spec / 規格描述";
-                input.type = "text";
-            }
+            input.type = (cat === 'FRIDGE') ? "date" : "text";
         }
 
-        function previewImage(input) {
+        function resetImage() {
+            document.getElementById('fileInput').value = "";
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('upload-hint').classList.remove('hidden');
+            compressedBlob = null;
+        }
+
+        // 智慧影像壓縮核心邏輯
+        async function processImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
             const hint = document.getElementById('upload-hint');
+            const container = document.getElementById('preview-container');
             const img = document.getElementById('imgPreview');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => { img.src = e.target.result; img.classList.remove('hidden'); hint.classList.add('hidden'); }
-                reader.readAsDataURL(input.files[0]);
-            }
+            const status = document.getElementById('status');
+
+            status.innerText = "⏳ 影像最佳化中...";
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const tempImg = new Image();
+                tempImg.src = e.target.result;
+                tempImg.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = tempImg.width;
+                    let height = tempImg.height;
+
+                    // 限制最大寬度為 1280px，這能顯著降低檔案大小
+                    const MAX_WIDTH = 1280;
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(tempImg, 0, 0, width, height);
+
+                    // 以 0.7 品質壓縮為 JPEG
+                    canvas.toBlob((blob) => {
+                        compressedBlob = blob;
+                        img.src = URL.createObjectURL(blob);
+                        hint.classList.add('hidden');
+                        container.classList.remove('hidden');
+                        status.innerText = `✅ 優化完成 (${(blob.size / 1024).toFixed(0)} KB)`;
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+            reader.readAsDataURL(file);
         }
 
         async function genToken() {
-            try {
-                const ts = Math.floor(Date.now() / 1000);
-                const enc = new TextEncoder();
-                const key = await crypto.subtle.importKey("raw", enc.encode(_v()), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
-                const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
-                const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-                return { ts, sig };
-            } catch (e) { throw new Error("加密握手失敗: " + e.message); }
+            const ts = Math.floor(Date.now() / 1000);
+            const _v = () => ["XUEHONG", "SUPER", "SECRET", "KEY", "2026"].join("_");
+            const enc = new TextEncoder();
+            const key = await crypto.subtle.importKey("raw", enc.encode(_v()), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+            const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(String(ts)));
+            return { ts, sig: btoa(String.fromCharCode(...new Uint8Array(sigBuf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") };
         }
 
         async function startUpload() {
-            const file = document.getElementById('fileInput').files[0];
+            if (!compressedBlob) return alert("📸 請先選擇影像");
             const name = document.getElementById('itemName').value;
-            const spec = document.getElementById('itemSpec').value;
-            const loc = document.getElementById('itemLocation').value;
-            const qty = document.getElementById('itemQty').value;
+            if (!name) return alert("✍️ 請輸入物品名稱");
+
             const btn = document.getElementById('uploadBtn');
             const status = document.getElementById('status');
-
-            if (!file || !name) return alert("📸 請先選擇影像並輸入名稱");
+            btn.disabled = true;
 
             try {
-                btn.disabled = true;
-                status.innerText = ">> 影像上傳中 (Firebase)...";
+                status.innerText = "🚀 疾速上傳中 (Firebase)...";
                 
-                const fileRef = storage.ref(`inventory/${Date.now()}_${file.name}`);
-                const snapshot = await fileRef.put(file);
+                // 設定 90 秒上傳超時預警
+                const uploadTask = storage.ref(`inventory/${Date.now()}.jpg`).put(compressedBlob);
+                
+                const uploadTimeout = setTimeout(() => {
+                    alert("🛑 上傳超時！請檢查網路環境或重試。");
+                    location.reload();
+                }, 90000);
+
+                const snapshot = await uploadTask;
+                clearTimeout(uploadTimeout);
                 const firebaseUrl = await snapshot.ref.getDownloadURL();
 
-                status.innerText = ">> 歸檔驗證中 (Google Sheet)...";
+                status.innerText = "✍️ 資料寫入中 (Google Sheet)...";
                 const { ts, sig } = await genToken();
-
-                // 儲位與規格合併處理
-                const combinedSpec = `${spec || '無'} | 儲位：${loc || '未註明'}`;
-
                 const payload = {
                     ts, sig, name, 
-                    spec: combinedSpec, 
-                    qty: parseInt(qty) || 1, 
-                    firebaseUrl, 
-                    category: document.getElementById('category').value, 
-                    mode: "add"
+                    spec: `${document.getElementById('itemSpec').value || '無'} | 儲位：${document.getElementById('itemLocation').value || '未定'}`, 
+                    qty: parseInt(document.getElementById('itemQty').value) || 1, 
+                    firebaseUrl, category: document.getElementById('category').value, mode: "add"
                 };
 
                 const response = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
                 const result = await response.json();
 
                 if (result.status === "success") {
-                    status.innerText = ">> 入庫圓滿完成！";
+                    status.innerText = "🎯 圓滿歸檔";
                     document.getElementById('egg-modal').classList.remove('hidden');
-                    document.getElementById('egg-sentence').innerText = `物品「${name}」已妥善存放在「${loc || '未指定儲位'}」。`;
-                } else { 
-                    throw new Error(result.message || "後台伺服器回傳錯誤"); 
-                }
+                    document.getElementById('egg-sentence').innerText = `物品「${name}」已妥善存檔。`;
+                } else { throw new Error(result.message); }
             } catch (err) {
-                console.error(err);
-                alert("🛑 入庫失敗報錯: " + err.message);
+                alert("🛑 錯誤: " + err.message);
                 btn.disabled = false;
-                status.innerText = "狀態：暫停中";
+                status.innerText = "系統重置中";
             }
         }
     </script>
