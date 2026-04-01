@@ -6,89 +6,110 @@
     <title>博毅坊 - 智慧冰箱歸檔系統</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .bo-yi-fang-container { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        .header h3 { color: #2c3e50; margin-bottom: 5px; }
-        .header p { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; }
-        .field-group { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .field-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #34495e; }
-        .field-group input { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-sizing: border-box; }
-        .btn-main { background: #27ae60; color: white; padding: 18px 40px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.2s; width: 100%; }
-        .btn-main:active { transform: scale(0.95); }
-        #status-msg { margin-top: 20px; font-size: 14px; line-height: 1.6; }
+        :root { --primary-color: #27ae60; --secondary-color: #2c3e50; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
+        .bo-yi-fang-card { background: white; width: 100%; max-width: 450px; padding: 30px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        .header h3 { margin: 0; color: var(--secondary-color); font-size: 24px; }
+        .status-badge { background: #f39c12; color: white; padding: 4px 12px; border-radius: 50px; font-size: 12px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn-capture { width: 100%; background: var(--primary-color); color: white; border: none; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-capture:hover { background: #219150; box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
+        #log-area { margin-top: 20px; padding: 15px; border-radius: 10px; font-size: 14px; display: none; }
     </style>
 </head>
 <body>
 
-<div class="bo-yi-fang-container">
+<div class="bo-yi-fang-card">
     <div class="header">
-        <h3>🏛️ 博毅坊：智慧冰箱歸檔</h3>
-        <p>當前方案：<span style="color: #f39c12; font-weight: bold;">Blaze (已激活)</span></p>
+        <h3>🏛️ 博毅坊 (Bo-Yi-Fang)</h3>
+        <span class="status-badge">Blaze 方案已連通</span>
     </div>
 
-    <div class="field-group">
-        <label>📅 文件建置日期：</label>
-        <input type="date" id="doc-build-date">
+    <div class="form-group">
+        <label>📅 文件建置日期 (檔案索引關鍵)：</label>
+        <input type="date" id="buildDate" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label>🍎 物品名稱：</label>
+        <input type="text" id="itemName" class="form-control" placeholder="例如：高麗菜、大成鮮蛋">
     </div>
 
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
-    <button onclick="document.getElementById('cameraInput').click()" class="btn-main">
-        📸 拍取照片入庫
+    <button onclick="document.getElementById('cameraInput').click()" class="btn-capture">
+        📸 影像採集並入庫
     </button>
     
-    <div id="status-msg"></div>
+    <div id="log-area"></div>
 </div>
 
 <script>
-// 1. 初始化日期：預設為今日
-document.getElementById('doc-build-date').valueAsDate = new Date();
+// 1. 初始化文件建置日
+document.getElementById('buildDate').valueAsDate = new Date();
 
-// 2. Firebase 配置 (已校準專案 ID: xuehong-inventory)
+// 2. Firebase 配置 (已校準 xuehong-inventory)
 const firebaseConfig = {
-    apiKey: "AIzaSyB...", // ⚠️ 這裡請填入你的真正的 API Key
+    apiKey: "你的API_KEY", 
     authDomain: "xuehong-inventory.firebaseapp.com",
     projectId: "xuehong-inventory",
     storageBucket: "xuehong-inventory.appspot.com",
-    messagingSenderId: "...", 
-    appId: "..."
+    messagingSenderId: "你的SENDER_ID",
+    appId: "你的APP_ID"
 };
 
-// 3. 安全初始化預檢
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+// 3. 初始化服務
+firebase.initializeApp(firebaseConfig);
 const storage = firebase.storage();
+const db = firebase.firestore();
 
-// 4. 上傳邏輯處理
+// 4. 核心邏輯：上傳影像 + 紀錄數據
 document.getElementById('cameraInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
-    const buildDate = document.getElementById('doc-build-date').value;
-    const status = document.getElementById('status-msg');
+    const itemName = document.getElementById('itemName').value || "未命名物品";
+    const bDate = document.getElementById('buildDate').value;
+    const log = document.getElementById('log-area');
 
     if (!file) return;
 
-    status.innerHTML = "<span style='color: #3498db;'>⏳ 正在歸檔至博毅坊雲端...</span>";
+    // UI 狀態更新
+    log.style.display = "block";
+    log.style.background = "#e3f2fd";
+    log.innerHTML = "⏳ 正在啟動博毅坊雙重歸檔程式...";
 
     try {
-        // 檔案命名規則：建置日期/時間戳_原檔名
-        const fileName = `inventory/${buildDate}/${Date.now()}_${file.name}`;
-        const storageRef = storage.ref(fileName);
+        // 第一步：上傳影像至 Storage
+        const fileRef = storage.ref(`inventory_images/${bDate}/${Date.now()}_${file.name}`);
+        const snapshot = await fileRef.put(file);
+        const imgURL = await snapshot.ref.getDownloadURL();
+        log.innerHTML += "<br>✅ 影像已存入 Storage 倉庫";
+
+        // 第二步：將結構化數據存入 Firestore
+        await db.collection("fridge_items").add({
+            name: itemName,
+            date: bDate,
+            image: imgURL,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            location: "asia-east1 (Taiwan)"
+        });
         
-        const snapshot = await storageRef.put(file);
-        const downloadURL = await snapshot.ref.getDownloadURL();
+        log.style.background = "#e8f5e9";
+        log.innerHTML = `
+            <div style="color: #27ae60; font-weight: bold;">🎉 GO LIVE! 歸檔成功</div>
+            <small>物品：${itemName}</small><br>
+            <small>日期：${bDate}</small><br>
+            <a href="${imgURL}" target="_blank" style="color: #2980b9;">[查看影像軌跡]</a>
+        `;
         
-        status.innerHTML = `
-            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border: 1px solid #27ae60;">
-                <b style="color: #27ae60;">✅ 歸檔成功！</b><br>
-                <small>建置日期：${buildDate}</small><br>
-                <a href="${downloadURL}" target="_blank" style="color: #2980b9;">[查看雲端檔案]</a>
-            </div>`;
-        
-    } catch (error) {
-        console.error("博毅坊執行異常：", error);
-        status.innerHTML = `<b style="color: #c0392b;">❌ 失敗：</b> ${error.message}`;
+    } catch (err) {
+        log.style.background = "#ffebee";
+        log.innerHTML = `❌ 系統報錯：${err.message}`;
+        console.error("博毅坊 Debug Info:", err);
     }
 });
 </script>
