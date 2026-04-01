@@ -1,143 +1,97 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 數位門戶 v5.2.9</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
+    <title>博毅坊 - 智慧冰箱歸檔系統</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
     <style>
-        body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; overflow: hidden; }
-        
-        /* 牌坊沉浸式畫布 */
-        .paifang-canvas { 
-            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative;
-        }
-
-        @media (min-width: 1024px) {
-            .paifang-canvas {
-                aspect-ratio: 16 / 9; max-width: 90vw; max-height: 85vh;
-                margin: 2rem auto; border: 2px solid rgba(255,255,255,0.05);
-                border-radius: 4rem; box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-                padding: 3rem;
-            }
-        }
-
-        @media (max-width: 1023px) {
-            .paifang-canvas { min-height: 100vh; padding: 2rem 1rem; overflow-y: auto; }
-        }
-
-        /* 牌坊主匾額與玻璃質感 */
-        .glass-plaque {
-            background: rgba(30, 41, 59, 0.3); backdrop-filter: blur(25px);
-            border-top: 4px solid #3b82f6; border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .category-card {
-            background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.08); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .category-card:hover {
-            transform: translateY(-8px); background: rgba(59, 130, 246, 0.15);
-            border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2);
-        }
-
-        /* 虛擬連動：懸浮齒輪動畫 */
-        @keyframes rotateGear { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .hover-gear:hover { animation: rotateGear 2s linear infinite; }
-        
-        @keyframes bounce-short {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-pop { animation: bounce-short 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .bo-yi-fang-container { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .header h3 { color: #2c3e50; margin-bottom: 5px; }
+        .header p { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; }
+        .field-group { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .field-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #34495e; }
+        .field-group input { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { background: #27ae60; color: white; padding: 18px 40px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.2s; width: 100%; }
+        .btn-main:active { transform: scale(0.95); }
+        #status-msg { margin-top: 20px; font-size: 14px; line-height: 1.6; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body>
 
-    <div class="paifang-canvas w-full">
-        
-        <div id="quote-flow" class="w-full max-w-3xl mb-8 lg:mb-12 px-6 text-center opacity-0 transition-opacity duration-1000">
-            <div class="inline-block px-6 py-2 rounded-full border border-blue-900/50 bg-blue-950/20 shadow-inner">
-                <p id="quote-text" class="text-[11px] lg:text-sm text-blue-200 tracking-wide font-light"></p>
-                <p id="quote-author" class="text-[9px] text-blue-500 mt-1 uppercase font-bold font-sans"></p>
-            </div>
-        </div>
-
-        <div class="glass-plaque px-8 lg:px-16 py-6 lg:py-10 rounded-2xl mb-10 lg:mb-16 text-center shadow-2xl">
-            <h1 class="text-3xl lg:text-6xl font-black tracking-[0.3em] text-white">學宏 @ 博毅坊</h1>
-            <div class="flex items-center justify-center gap-4 mt-4">
-                <span class="h-[1px] w-8 lg:w-16 bg-slate-700"></span>
-                <p class="text-slate-500 text-[10px] lg:text-sm font-sans tracking-[0.8em] uppercase italic">The Resolute Workshop</p>
-                <span class="h-[1px] w-8 lg:w-16 bg-slate-700"></span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 px-4 lg:px-12 w-full max-w-6xl">
-            <a href="collection.html" class="category-card p-6 lg:p-10 rounded-[2rem] text-center group">
-                <div class="text-4xl lg:text-6xl mb-4 group-hover:rotate-12 transition">💎</div>
-                <div class="font-bold text-sm lg:text-xl tracking-widest">私人收藏</div>
-            </a>
-            <a href="fridge.html" class="category-card p-6 lg:p-10 rounded-[2rem] text-center group">
-                <div class="text-4xl lg:text-6xl mb-4 group-hover:scale-110 transition">❄️</div>
-                <div class="font-bold text-sm lg:text-xl tracking-widest">智慧冰箱</div>
-            </a>
-            <a href="books.html" class="category-card p-6 lg:p-10 rounded-[2rem] text-center group">
-                <div class="text-4xl lg:text-6xl mb-4 group-hover:-rotate-12 transition">📚</div>
-                <div class="font-bold text-sm lg:text-xl tracking-widest">私人書藏</div>
-            </a>
-            <a href="wardrobe.html" class="category-card p-6 lg:p-10 rounded-[2rem] text-center group">
-                <div class="text-4xl lg:text-6xl mb-4 group-hover:scale-110 transition">👔</div>
-                <div class="font-bold text-sm lg:text-xl tracking-widest">精品衣櫥</div>
-            </a>
-        </div>
-
-        <div id="virtual-linkage" class="fixed bottom-8 right-8 z-[100] flex flex-col-reverse items-center gap-4">
-            <button onclick="toggleNav()" class="w-14 h-14 rounded-full bg-blue-600/20 backdrop-blur-xl border border-blue-500/30 text-white shadow-2xl flex items-center justify-center hover:bg-blue-600/40 transition-all active:scale-90 hover-gear">
-                <span class="text-2xl">⚙️</span>
-            </button>
-            
-            <div id="nav-items" class="hidden flex flex-col gap-4 mb-4 animate-pop">
-                <a href="admin.html" title="指揮中心" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">🖥️</a>
-                <a href="upload.html" title="入庫工位" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">📸</a>
-                <button onclick="location.reload()" title="重整坊間" class="w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-700 flex items-center justify-center text-lg shadow-xl hover:border-blue-500 hover:scale-110 transition">🔄</button>
-            </div>
-        </div>
-
-        <footer class="mt-auto mb-6 text-[9px] text-slate-800 tracking-[0.4em] uppercase">
-            © 2026 HSUEH-HUNG @ BO-YI FANG | V5.2.9 MASTER
-        </footer>
+<div class="bo-yi-fang-container">
+    <div class="header">
+        <h3>🏛️ 博毅坊：智慧冰箱歸檔</h3>
+        <p>當前方案：<span style="color: #f39c12; font-weight: bold;">Blaze (已激活)</span></p>
     </div>
 
-    <script>
-        // 中西典故集 [cite: 2025-10-01]
-        const quotes = [
-            { text: "「博學而篤志，切問而近思，仁在其中矣。」", author: "—《論語 · 子張》" },
-            { text: "「君子求諸己，小人求諸人。」", author: "—《論語 · 衛靈公》" },
-            { text: "「博觀而約取，厚積而薄發。」", author: "— 蘇軾" },
-            { text: "“The important thing is not to stop questioning.”", author: "— Albert Einstein" },
-            { text: "“Stay hungry, stay foolish.”", author: "— Steve Jobs" },
-            { text: "“True humility is not thinking less of yourself; it is thinking of yourself less.”", author: "— C.S. Lewis" },
-            { text: "“Knowledge makes humble, ignorance makes proud.”", author: "— Socrates" }
-        ];
+    <div class="field-group">
+        <label>📅 文件建置日期：</label>
+        <input type="date" id="doc-build-date">
+    </div>
 
-        function refreshQuote() {
-            const flow = document.getElementById('quote-flow');
-            const idx = Math.floor(Math.random() * quotes.length);
-            document.getElementById('quote-text').innerText = quotes[idx].text;
-            document.getElementById('quote-author').innerText = quotes[idx].author;
-            flow.style.opacity = 1;
-        }
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+    <button onclick="document.getElementById('cameraInput').click()" class="btn-main">
+        📸 拍取照片入庫
+    </button>
+    
+    <div id="status-msg"></div>
+</div>
 
-        function toggleNav() {
-            const nav = document.getElementById('nav-items');
-            nav.classList.toggle('hidden');
-        }
+<script>
+// 1. 初始化日期：預設為今日
+document.getElementById('doc-build-date').valueAsDate = new Date();
 
-        window.onload = refreshQuote;
-    </script>
+// 2. Firebase 配置 (已校準專案 ID: xuehong-inventory)
+const firebaseConfig = {
+    apiKey: "AIzaSyB...", // ⚠️ 這裡請填入你的真正的 API Key
+    authDomain: "xuehong-inventory.firebaseapp.com",
+    projectId: "xuehong-inventory",
+    storageBucket: "xuehong-inventory.appspot.com",
+    messagingSenderId: "...", 
+    appId: "..."
+};
+
+// 3. 安全初始化預檢
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const storage = firebase.storage();
+
+// 4. 上傳邏輯處理
+document.getElementById('cameraInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const buildDate = document.getElementById('doc-build-date').value;
+    const status = document.getElementById('status-msg');
+
+    if (!file) return;
+
+    status.innerHTML = "<span style='color: #3498db;'>⏳ 正在歸檔至博毅坊雲端...</span>";
+
+    try {
+        // 檔案命名規則：建置日期/時間戳_原檔名
+        const fileName = `inventory/${buildDate}/${Date.now()}_${file.name}`;
+        const storageRef = storage.ref(fileName);
+        
+        const snapshot = await storageRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        status.innerHTML = `
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border: 1px solid #27ae60;">
+                <b style="color: #27ae60;">✅ 歸檔成功！</b><br>
+                <small>建置日期：${buildDate}</small><br>
+                <a href="${downloadURL}" target="_blank" style="color: #2980b9;">[查看雲端檔案]</a>
+            </div>`;
+        
+    } catch (error) {
+        console.error("博毅坊執行異常：", error);
+        status.innerHTML = `<b style="color: #c0392b;">❌ 失敗：</b> ${error.message}`;
+    }
+});
+</script>
+
 </body>
 </html>
