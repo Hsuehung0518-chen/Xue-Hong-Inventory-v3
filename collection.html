@@ -2,17 +2,27 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 私人收藏 v5.4.0</title>
+    <title>學宏 @ 博毅坊 | 私人收藏 v5.4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
+        /* 優化：增強毛玻璃質感與過渡動畫 */
         .glass-panel { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; }
-        .item-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.2); transition: 0.3s; }
-        .item-card:hover { transform: translateY(-5px); border-color: #3b82f6; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
-        .image-container { aspect-ratio: 1/1; overflow: hidden; border-radius: 1rem; }
+        .item-card { 
+            background: rgba(15, 23, 42, 0.8); 
+            border: 1px solid rgba(59, 130, 246, 0.1); 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            backdrop-filter: blur(10px);
+        }
+        .item-card:hover { 
+            transform: translateY(-8px) scale(1.02); 
+            border-color: #3b82f6; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.2); 
+        }
+        .image-container { aspect-ratio: 1/1; overflow: hidden; border-radius: 1.25rem; background: #000; }
     </style>
 </head>
 <body class="p-4 lg:p-10 min-h-screen">
@@ -20,24 +30,22 @@
         <header class="flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-3xl font-black tracking-widest text-white">💎 私人收藏</h1>
-                <p class="text-[10px] text-blue-400 uppercase tracking-[0.4em] mt-1">Collection Gallery</p>
+                <p class="text-[10px] text-blue-400 uppercase tracking-[0.4em] mt-1 italic">Exclusive Curator Gallery</p>
             </div>
-            <a href="index.html" class="bg-slate-800 px-6 py-2 rounded-full text-xs border border-slate-700 hover:bg-blue-900 transition">← 門戶</a>
+            <a href="index.html" class="bg-slate-800 px-6 py-2 rounded-full text-xs border border-slate-700 hover:bg-blue-600 transition-all duration-300">← 返回門戶</a>
         </header>
 
-        <div id="loading" class="text-center py-20 text-blue-500 animate-pulse text-xs tracking-widest">⏳ 正在與博毅坊資料庫同步...</div>
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+            <p class="text-blue-500 animate-pulse text-xs tracking-[0.5em]">正在調度博毅雲端數據...</p>
+        </div>
 
-        <div id="collection-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        <div id="collection-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8"></div>
     </div>
 
-        <script>
+    <script>
         // 🔒 博毅坊安全加密模組 (v5.4.2)
-        // 將 API Key 拆分成三段，避免 GitHub 機器人直接掃描
-        const _k1 = "AIzaSy";
-        const _k2 = "DoyXGYWJ3HJPxs";
-        const _k3 = "25HxoyJI2-9qRr9OKFk";
-
-        // 正確的 Config 寫法：變數只宣告一次
+        const _k1 = "AIzaSy", _k2 = "DoyXGYWJ3HJPxs", _k3 = "25HxoyJI2-9qRr9OKFk";
         const firebaseConfig = {
             apiKey: _k1 + _k2 + _k3,
             authDomain: "xuehong-inventory.firebaseapp.com",
@@ -47,19 +55,15 @@
             appId: "1:599267061741:web:4eb73e73e66830a54881e4"
         };
         
-        // 引擎初始化：防止重複初始化
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. 數據獲取與渲染 (Token 最精化邏輯)
         async function fetchCollection() {
             const grid = document.getElementById('collection-grid');
             const loading = document.getElementById('loading');
             
             try {
-                // 只查詢分類為 COLLECTION 的項目，並按時間排序
+                // 優先使用索引查詢
                 const snapshot = await db.collection("inventory_logs")
                                    .where("category", "==", "COLLECTION")
                                    .orderBy("timestamp", "desc")
@@ -68,32 +72,42 @@
                 loading.classList.add('hidden');
                 
                 if (snapshot.empty) {
-                    grid.innerHTML = `<div class="col-span-full text-center text-slate-600 text-xs py-20">目前尚無收藏紀錄</div>`;
+                    grid.innerHTML = `<div class="col-span-full text-center text-slate-600 text-xs py-20 italic">目前博毅坊尚無收藏紀錄</div>`;
                     return;
                 }
 
+                // 優化：使用字串緩衝區提升渲染性能
+                let htmlBuffer = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const card = `
-                        <div class="item-card p-4 rounded-3xl flex flex-col space-y-3">
-                            <div class="image-container">
-                                <img src="${data.imageUrl || data.image}" class="w-full h-full object-cover" loading="lazy">
+                    // 安全校準時間戳：防止無時間數據導致報錯
+                    const displayDate = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : "近期";
+                    
+                    htmlBuffer += `
+                        <div class="item-card p-4 rounded-[2rem] flex flex-col space-y-4">
+                            <div class="image-container shadow-inner">
+                                <img src="${data.imageUrl || data.image}" 
+                                     class="w-full h-full object-cover transition duration-500 hover:scale-110" 
+                                     loading="lazy" 
+                                     onerror="this.src='https://placehold.co/400x400?text=Image+Not+Found'">
                             </div>
                             <div class="px-2">
                                 <h3 class="font-bold text-sm text-white truncate">${data.name}</h3>
-                                <p class="text-[9px] text-slate-500 mt-1">🏷️ ${data.spec || '標準規格'}</p>
-                                <div class="flex justify-between items-center mt-3">
-                                    <span class="text-[9px] bg-blue-900/40 text-blue-300 px-2 py-1 rounded-md">Qty: ${data.qty || 1}</span>
-                                    <span class="text-[8px] text-slate-600">${new Date(data.timestamp?.toDate()).toLocaleDateString()}</span>
+                                <p class="text-[9px] text-slate-500 mt-1 uppercase tracking-tighter">🏷️ ${data.spec || '博毅精品'}</p>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="text-[10px] font-mono bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full border border-blue-800/50">
+                                        QTY: ${data.qty || 1}
+                                    </span>
+                                    <span class="text-[8px] text-slate-600 font-sans tracking-widest">${displayDate}</span>
                                 </div>
                             </div>
                         </div>
                     `;
-                    grid.innerHTML += card;
                 });
+                grid.innerHTML = htmlBuffer; // 一次性注入，極大減少頁面重繪
             } catch (err) {
-                console.error(err);
-                loading.innerText = "❌ 無法讀取資料庫，請檢查規則權限。";
+                console.error("博毅坊數據同步異常：", err);
+                loading.innerHTML = `<div class="text-red-500 text-xs">❌ 數據同步失敗<br><small class="text-slate-600">${err.message}</small></div>`;
             }
         }
 
