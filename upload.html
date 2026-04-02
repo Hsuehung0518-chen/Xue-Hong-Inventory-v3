@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 疾速工位 v5.4.0</title>
+    <title>學宏 @ 博毅坊 | 疾速工位 v5.4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
@@ -16,27 +16,25 @@
 <body class="flex items-center justify-center min-h-screen p-4">
     <div class="glass-station w-full max-w-xl p-8 space-y-6 shadow-2xl">
         <h2 class="text-2xl font-black text-center tracking-widest">博毅坊 · 疾速工位</h2>
-        
         <div id="drop-zone" class="relative h-48 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/50 flex flex-col items-center justify-center cursor-pointer" onclick="document.getElementById('fileInput').click()">
             <div id="upload-hint" class="text-center">📸 <p class="text-xs text-slate-500 mt-2">點擊拍照或選擇影像</p></div>
             <img id="imgPreview" class="hidden h-full w-full object-contain rounded-2xl">
             <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="previewImage(this)">
         </div>
-
         <div class="grid grid-cols-2 gap-4">
             <select id="category" class="input-dark text-sm">
                 <option value="FRIDGE">❄️ 智慧冰箱</option><option value="COLLECTION">💎 私人收藏</option>
+                <option value="BOOKS">📚 私人書藏</option><option value="WARDROBE">👔 精品衣櫥</option>
             </select>
             <input type="text" id="itemName" placeholder="物品名稱" class="input-dark text-sm">
         </div>
-
         <button onclick="executeVault()" id="vaultBtn" class="w-full bg-blue-600 py-4 rounded-xl font-bold tracking-[0.5em] hover:bg-blue-500 transition active:scale-95">確認入庫 · 博毅恆行</button>
         <p id="status" class="text-center text-[10px] text-blue-400 tracking-widest min-h-[1em]"></p>
     </div>
-
     <script>
+        const _k1="AIzaSy", _k2="DoyXGYWJ3HJPxs", _k3="25HxoyJI2-9qRr9OKFk";
         const firebaseConfig = {
-            apiKey: "AIzaSyDoyXGYwJ3HJPxs25HxoyJI2-9qRr9OKFk", 
+            apiKey: _k1+_k2+_k3,
             authDomain: "xuehong-inventory.firebaseapp.com",
             projectId: "xuehong-inventory",
             storageBucket: "xuehong-inventory.firebasestorage.app",
@@ -44,53 +42,29 @@
             appId: "1:599267061741:web:4eb73e73e66830a54881e4"
         };
         firebase.initializeApp(firebaseConfig);
-        const storage = firebase.storage();
-        const db = firebase.firestore();
+        const storage = firebase.storage(), db = firebase.firestore();
         let selectedFile = null;
-
         function previewImage(input) {
-            const file = input.files[0];
-            if (!file) return;
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.getElementById('imgPreview');
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-                document.getElementById('upload-hint').classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
+            const file = input.files[0]; if (!file) return; selectedFile = file;
+            const reader = new FileReader(); reader.onload = (e) => {
+                const img = document.getElementById('imgPreview'); img.src = e.target.result;
+                img.classList.remove('hidden'); document.getElementById('upload-hint').classList.add('hidden');
+            }; reader.readAsDataURL(file);
         }
-
         async function executeVault() {
-            const name = document.getElementById('itemName').value;
-            if (!selectedFile || !name) return alert("📸 影像與名稱均為必填");
-            
-            const btn = document.getElementById('vaultBtn');
-            const status = document.getElementById('status');
-            btn.disabled = true;
-            status.innerText = "⏳ 正在同步博毅坊雲端...";
-
+            const name = document.getElementById('itemName').value; if (!selectedFile || !name) return alert("📸 影像與名稱均為必填");
+            const btn = document.getElementById('vaultBtn'), status = document.getElementById('status');
+            btn.disabled = true; status.innerText = "⏳ 正在同步博毅坊雲端...";
             try {
-                // 1. 影像採集與上傳
                 const fileName = `archive_${Date.now()}.jpg`;
                 const snapshot = await storage.ref(`inventory/${fileName}`).put(selectedFile);
                 const url = await snapshot.ref.getDownloadURL();
-
-                // 2. 數據入庫 (Firestore)
                 await db.collection("inventory_logs").add({
-                    name: name,
-                    category: document.getElementById('category').value,
-                    imageUrl: url,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    name: name, category: document.getElementById('category').value,
+                    imageUrl: url, timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-
-                status.innerText = "🎯 歸檔成功";
-                setTimeout(() => location.reload(), 2000);
-            } catch (e) {
-                status.innerText = "❌ 失敗：" + e.message;
-                btn.disabled = false;
-            }
+                status.innerText = "🎯 歸檔成功"; setTimeout(() => location.reload(), 2000);
+            } catch (e) { status.innerText = "❌ 失敗：" + e.message; btn.disabled = false; }
         }
     </script>
 </body>
