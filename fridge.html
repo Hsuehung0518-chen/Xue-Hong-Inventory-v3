@@ -1,97 +1,75 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學宏 @ 博毅坊 | 智慧冰箱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        /* 新增：健康叮嚀彈窗樣式 */
-        .health-modal {
-            background: rgba(15, 23, 42, 0.98);
-            backdrop-filter: blur(40px);
-            border: 2px solid rgba(59, 130, 246, 0.3);
-            animation: slideIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
+        body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); }
+        .health-modal { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(40px); border: 2px solid rgba(59, 130, 246, 0.3); }
         .pulse-red { animation: pulseRed 2s infinite; }
         @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
-<body class="flex lg:items-center lg:justify-center min-h-screen">
+<body class="p-6">
+    <header class="max-w-6xl mx-auto flex justify-between items-center mb-10">
+        <h1 class="text-3xl font-black tracking-widest">❄️ 智慧冰箱</h1>
+        <a href="index.html" class="bg-slate-800 px-6 py-2 rounded-full text-xs">← 傳送門</a>
+    </header>
+
+    <div id="loading" class="text-center py-20 text-blue-500 animate-pulse text-xs">⏳ 正在掃描冰箱內容...</div>
+    <div id="fridge-grid" class="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6"></div>
+
     <div id="health-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
         <div id="modal-content" class="health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8">
             <p id="health-status" class="text-[10px] tracking-[0.3em] mb-2 uppercase font-bold"></p>
-            <h2 id="health-title" class="text-3xl font-black text-white mb-6 italic">Item Name</h2>
-            
-            <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 mb-8 text-left">
-                <p id="health-tip" class="text-xs text-slate-300 leading-loose"></p>
-            </div>
-
-            <button onclick="closeHealthModal()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-bold transition shadow-lg">知曉並執行 · 博毅篤行</button>
+            <h2 id="health-title" class="text-3xl font-black text-white mb-6 italic"></h2>
+            <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 mb-8 text-left text-xs leading-loose text-slate-300" id="health-tip"></div>
+            <button onclick="document.getElementById('health-modal').classList.add('hidden')" class="w-full py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold">知曉並執行 · 博毅篤行</button>
         </div>
     </div>
 
     <script>
-        // 智慧健康知識庫 (可隨時擴充)
+        const firebaseConfig = { projectId: "xuehong-inventory", storageBucket: "xuehong-inventory.appspot.com" }; // 這裡需補齊你的真實Config
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const healthWisdom = {
-            expired: {
-                label: "⚠️ 斷捨離提醒",
-                color: "border-red-600 text-red-500",
-                tips: "過期食品可能產生肉眼不可見的黴菌。為了您的博毅體魄，請果斷清理，並清潔該區域以防交叉污染。"
-            },
-            warning: {
-                label: "⏳ 優先處理",
-                color: "border-yellow-500 text-yellow-500",
-                tips: "建議今晚就將其化為佳餚！若是蔬果，可嘗試製成溫沙拉或果昔，鎖住最後的營養價值。"
-            },
-            fresh: {
-                label: "✅ 營養巔峰",
-                color: "border-green-500 text-green-500",
-                tips: "目前正是這份食材營養最豐富的時刻。適量攝取，能為您的 AI 策劃工作提供源源不絕的能量！"
-            }
+            expired: { label: "⚠️ 斷捨離提醒", color: "border-red-600 text-red-500", tips: "過期食品可能產生黴菌。為了您的博毅體魄，請果斷清理。" },
+            warning: { label: "⏳ 優先處理", color: "border-yellow-500 text-yellow-500", tips: "建議今晚就將其化為佳餚！鎖住最後的營養價值。" },
+            fresh: { label: "✅ 營養巔峰", color: "border-green-500 text-green-500", tips: "目前正是食材營養最豐富的時刻。適量攝取，提供能量！" }
         };
 
-        function showHealthTip(name, status) {
-            const modal = document.getElementById('health-modal');
-            const content = document.getElementById('modal-content');
-            const title = document.getElementById('health-title');
-            const statusLabel = document.getElementById('health-status');
-            const tip = document.getElementById('health-tip');
-
-            const wisdom = healthWisdom[status];
+        async function fetchFridge() {
+            const grid = document.getElementById('fridge-grid');
+            const snapshot = await db.collection("inventory_logs").where("category", "==", "FRIDGE").get();
+            document.getElementById('loading').classList.add('hidden');
             
-            content.className = `health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8 ${wisdom.color}`;
-            statusLabel.innerText = wisdom.label;
-            statusLabel.className = `text-[10px] tracking-[0.3em] mb-2 uppercase font-bold ${wisdom.color.split(' ')[1]}`;
-            title.innerText = name;
-            tip.innerText = wisdom.tips;
-
-            modal.classList.remove('hidden');
-        }
-
-        function closeHealthModal() {
-            document.getElementById('health-modal').classList.add('hidden');
-        }
-
-        // 修改原本的 createCard 函數，增加點擊事件
-        function createCard(name, spec, url, qty, date) {
-            const div = document.createElement('div');
-            let statusKey = "fresh";
-            let expiryClass = "expiry-fresh";
-            
-            if (spec && spec.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                const expiryDate = new Date(spec); 
-                const today = new Date();
-                const diffDays = (expiryDate - today) / (1000 * 60 * 60 * 24);
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                const expiryDate = new Date(d.spec);
+                const diff = (expiryDate - new Date()) / (1000 * 60 * 60 * 24);
+                let status = diff < 0 ? "expired" : (diff <= 3 ? "warning" : "fresh");
                 
-                if (diffDays < 0) { expiryClass = "expiry-expired pulse-red"; statusKey = "expired"; }
-                else if (diffDays <= 3) { expiryClass = "expiry-warning"; statusKey = "warning"; }
-            }
-
-            div.className = `glass-card p-4 rounded-xl relative overflow-hidden flex flex-col cursor-pointer transition active:scale-95 ${expiryClass}`;
-            div.onclick = () => showHealthTip(name, statusKey); // 綁定點擊彩蛋
-            
-            // ... 原本的 innerHTML 渲染內容 ...
-            return div;
+                const card = document.createElement('div');
+                card.className = `glass-card p-4 rounded-xl cursor-pointer transition active:scale-95 ${status === 'expired' ? 'pulse-red' : ''}`;
+                card.onclick = () => {
+                    const w = healthWisdom[status];
+                    document.getElementById('health-modal').classList.remove('hidden');
+                    document.getElementById('modal-content').className = `health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8 ${w.color}`;
+                    document.getElementById('health-status').innerText = w.label;
+                    document.getElementById('health-title').innerText = d.name;
+                    document.getElementById('health-tip').innerText = w.tips;
+                };
+                card.innerHTML = `<img src="${d.image}" class="h-32 w-full object-cover rounded-lg mb-2"><h3 class="font-bold">${d.name}</h3><p class="text-[10px] text-slate-500">效期：${d.spec}</p>`;
+                grid.appendChild(card);
+            });
         }
+        window.onload = fetchFridge;
     </script>
 </body>
 </html>
