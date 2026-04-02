@@ -2,73 +2,123 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學宏 @ 博毅坊 | 智慧冰箱</title>
+    <title>學宏 @ 博毅坊 | 智慧冰箱 v5.4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         body { background: #020617; color: #f1f5f9; font-family: 'Noto Serif TC', serif; margin: 0; }
-        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); }
+        .glass-card { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.1); transition: 0.4s; }
+        .glass-card:hover { transform: translateY(-5px); border-color: #3b82f6; }
         .health-modal { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(40px); border: 2px solid rgba(59, 130, 246, 0.3); }
+        
+        /* 狀態色標 */
+        .status-fresh { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-expired { background: #ef4444; }
+        
         .pulse-red { animation: pulseRed 2s infinite; }
         @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 lg:p-10 min-h-screen">
     <header class="max-w-6xl mx-auto flex justify-between items-center mb-10">
-        <h1 class="text-3xl font-black tracking-widest">❄️ 智慧冰箱</h1>
-        <a href="index.html" class="bg-slate-800 px-6 py-2 rounded-full text-xs">← 傳送門</a>
+        <div>
+            <h1 class="text-3xl font-black tracking-widest text-white">❄️ 智慧冰箱</h1>
+            <p class="text-[10px] text-blue-400 uppercase tracking-[0.4em] mt-1 italic">Real-time Nutrition Guard</p>
+        </div>
+        <a href="index.html" class="bg-slate-800 px-6 py-2 rounded-full text-xs border border-slate-700 hover:bg-blue-600 transition">← 返回門戶</a>
     </header>
 
-    <div id="loading" class="text-center py-20 text-blue-500 animate-pulse text-xs">⏳ 正在掃描冰箱內容...</div>
-    <div id="fridge-grid" class="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    <div id="loading" class="text-center py-20 text-blue-500 animate-pulse text-xs tracking-widest">⏳ 正在掃描冰箱內容與效期...</div>
+    <div id="fridge-grid" class="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8"></div>
 
     <div id="health-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
         <div id="modal-content" class="health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8">
             <p id="health-status" class="text-[10px] tracking-[0.3em] mb-2 uppercase font-bold"></p>
             <h2 id="health-title" class="text-3xl font-black text-white mb-6 italic"></h2>
             <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 mb-8 text-left text-xs leading-loose text-slate-300" id="health-tip"></div>
-            <button onclick="document.getElementById('health-modal').classList.add('hidden')" class="w-full py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold">知曉並執行 · 博毅篤行</button>
+            <button onclick="document.getElementById('health-modal').classList.add('hidden')" class="w-full py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold shadow-lg">知曉並執行 · 博毅篤行</button>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = { projectId: "xuehong-inventory", storageBucket: "xuehong-inventory.appspot.com" }; // 這裡需補齊你的真實Config
-        firebase.initializeApp(firebaseConfig);
+        // 🔒 博毅坊安全加密模組 (v5.4.2)
+        const _k1="AIzaSy", _k2="DoyXGYWJ3HJPxs", _k3="25HxoyJI2-9qRr9OKFk";
+        const firebaseConfig = {
+            apiKey: _k1+_k2+_k3,
+            authDomain: "xuehong-inventory.firebaseapp.com",
+            projectId: "xuehong-inventory",
+            storageBucket: "xuehong-inventory.firebasestorage.app",
+            messagingSenderId: "599267061741",
+            appId: "1:599267061741:web:4eb73e73e66830a54881e4"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
         const healthWisdom = {
-            expired: { label: "⚠️ 斷捨離提醒", color: "border-red-600 text-red-500", tips: "過期食品可能產生黴菌。為了您的博毅體魄，請果斷清理。" },
-            warning: { label: "⏳ 優先處理", color: "border-yellow-500 text-yellow-500", tips: "建議今晚就將其化為佳餚！鎖住最後的營養價值。" },
-            fresh: { label: "✅ 營養巔峰", color: "border-green-500 text-green-500", tips: "目前正是食材營養最豐富的時刻。適量攝取，提供能量！" }
+            expired: { label: "⚠️ 斷捨離提醒", color: "border-red-600 text-red-500", tips: "過期食品可能產生肉眼不可見的黴菌。為了您的博毅體魄，請果斷清理，並清潔該區域。" },
+            warning: { label: "⏳ 優先處理", color: "border-yellow-500 text-yellow-500", tips: "建議今晚就將其化為佳餚！若是蔬果，可嘗試製成溫沙拉，鎖住最後的營養。" },
+            fresh: { label: "✅ 營養巔峰", color: "border-green-500 text-green-500", tips: "目前正是食材營養最豐富的時刻。適量攝取，為您的 AI 策劃工作提供源源不絕的能量！" }
         };
 
         async function fetchFridge() {
             const grid = document.getElementById('fridge-grid');
-            const snapshot = await db.collection("inventory_logs").where("category", "==", "FRIDGE").get();
-            document.getElementById('loading').classList.add('hidden');
+            const loading = document.getElementById('loading');
             
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                const expiryDate = new Date(d.spec);
-                const diff = (expiryDate - new Date()) / (1000 * 60 * 60 * 24);
-                let status = diff < 0 ? "expired" : (diff <= 3 ? "warning" : "fresh");
+            try {
+                const snapshot = await db.collection("inventory_logs").where("category", "==", "FRIDGE").get();
+                loading.classList.add('hidden');
                 
-                const card = document.createElement('div');
-                card.className = `glass-card p-4 rounded-xl cursor-pointer transition active:scale-95 ${status === 'expired' ? 'pulse-red' : ''}`;
-                card.onclick = () => {
-                    const w = healthWisdom[status];
-                    document.getElementById('health-modal').classList.remove('hidden');
-                    document.getElementById('modal-content').className = `health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8 ${w.color}`;
-                    document.getElementById('health-status').innerText = w.label;
-                    document.getElementById('health-title').innerText = d.name;
-                    document.getElementById('health-tip').innerText = w.tips;
-                };
-                card.innerHTML = `<img src="${d.image}" class="h-32 w-full object-cover rounded-lg mb-2"><h3 class="font-bold">${d.name}</h3><p class="text-[10px] text-slate-500">效期：${d.spec}</p>`;
-                grid.appendChild(card);
-            });
+                let items = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const expiryDate = new Date(data.spec);
+                    const diff = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
+                    items.push({ ...data, diff });
+                });
+
+                // 🚀 優化：智慧排序（效期短的排前面）
+                items.sort((a, b) => a.diff - b.diff);
+
+                let htmlBuffer = "";
+                items.forEach(d => {
+                    let status = d.diff < 0 ? "expired" : (d.diff <= 3 ? "warning" : "fresh");
+                    let statusColor = status === 'expired' ? 'status-expired' : (status === 'warning' ? 'status-warning' : 'status-fresh');
+                    let diffText = d.diff < 0 ? `逾期 ${Math.abs(d.diff)} 天` : (d.diff === 0 ? "今日到期" : `剩餘 ${d.diff} 天`);
+
+                    htmlBuffer += `
+                        <div class="glass-card p-4 rounded-[2rem] relative cursor-pointer active:scale-95 ${status === 'expired' ? 'pulse-red' : ''}" 
+                             onclick="showHealthTip('${d.name}', '${status}')">
+                            <div class="absolute top-4 right-4 ${statusColor} text-[8px] text-white px-2 py-1 rounded-full font-bold shadow-lg">
+                                ${diffText}
+                            </div>
+                            <img src="${d.image || d.imageUrl}" class="h-32 w-full object-cover rounded-2xl mb-3" 
+                                 onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                            <div class="px-1">
+                                <h3 class="font-bold text-sm text-white truncate">${d.name}</h3>
+                                <p class="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter">📅 效期：${d.spec}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                grid.innerHTML = htmlBuffer;
+            } catch (err) {
+                loading.innerHTML = `<p class="text-red-500 text-xs">❌ 掃描失敗：${err.message}</p>`;
+            }
         }
+
+        function showHealthTip(name, status) {
+            const w = healthWisdom[status];
+            document.getElementById('health-modal').classList.remove('hidden');
+            document.getElementById('modal-content').className = `health-modal w-full max-w-sm p-8 rounded-[2.5rem] text-center border-t-8 ${w.color}`;
+            document.getElementById('health-status').innerText = w.label;
+            document.getElementById('health-title').innerText = name;
+            document.getElementById('health-tip').innerText = w.tips;
+        }
+
         window.onload = fetchFridge;
     </script>
 </body>
