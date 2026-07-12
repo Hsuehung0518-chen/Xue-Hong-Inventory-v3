@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "1",
+    "emoji": "🍵",
+    "title": "白瓷水墨風",
+    "desc": "禪意極簡 ‧ 適用於思想、歷史、文化主題",
+    "prompt": "[NotebookLM Cinematic] Minimalist White Porcelain base, Ink-wash textures with Jade Green organic bleed. High-key lighting, soft shadows, 4k macro details, serene pacing."
+  },
+  {
+    "id": "2",
+    "emoji": "🌌",
+    "title": "深色玻璃擬態",
+    "desc": "藍銀科技 ‧ 適用於科技、趨勢、未來分析主題",
+    "prompt": "[NotebookLM Cinematic] Deep Cyber-Glass aesthetic. Cyberpunk Blue neon refraction, frosted transparency. Data-stream overlays, ray-traced particles, cinematic depth."
+  },
+  {
+    "id": "3",
+    "emoji": "🌿",
+    "title": "吉卜力童話",
+    "desc": "溫馨生動 ‧ 適用於教育、自然、敘事主題",
+    "prompt": "[NotebookLM Cinematic] Ghibli fantasy animation style. Soft organic hand-drawn textures, golden hour amber lighting, dreamy forest details, nostalgic warm tones."
+  }
+]
